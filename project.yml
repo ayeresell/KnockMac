@@ -1,0 +1,40 @@
+name: KnockMac
+options:
+  bundleIdPrefix: com.knockmac
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  KnockMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: KnockMac
+        excludes:
+          - "**/*.plist"
+    info:
+      path: KnockMac/Info.plist
+      properties:
+        LSUIElement: true
+        LSMinimumSystemVersion: "14.0"
+        NSHumanReadableCopyright: "Copyright © 2025 KnockMac"
+        NSScreenCaptureUsageDescription: "KnockMac needs screen recording access to take screenshots when you knock."
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.knockmac.app
+        PRODUCT_NAME: KnockMac
+        INFOPLIST_FILE: KnockMac/Info.plist
+        CODE_SIGN_ENTITLEMENTS: KnockMac/KnockMac.entitlements
+    dependencies:
+      - framework: IOKit.framework
+        embed: false
+      - framework: ScreenCaptureKit.framework
+        embed: false
