@@ -8,6 +8,8 @@ import IOKit.hid
 //
 // Architecture mirrors taigrr/spank (Go) and olvvier/apple-silicon-accelerometer.
 
+private let kHIDNoOptions = IOOptionBits(kIOHIDOptionsTypeNone)
+
 struct AccelSample {
     let x: Double
     let y: Double
@@ -29,8 +31,15 @@ final class AccelerometerReader {
 
     nonisolated(unsafe) private var manager: IOHIDManager?
     nonisolated(unsafe) private var device: IOHIDDevice?
-    nonisolated(unsafe) private var reportBuffer = [UInt8](repeating: 0, count: 64)
-    nonisolated(unsafe) private static let noOptions = IOOptionBits(kIOHIDOptionsTypeNone)
+
+    // Fixed-size buffer allocated once — safe to pass as IOKit-owned storage.
+    // Swift Array is not safe here: COW can invalidate the internal pointer mid-write.
+    nonisolated(unsafe) private let reportBufferPtr: UnsafeMutablePointer<UInt8> = .allocate(capacity: 64)
+    private let reportBufferSize = 64
+
+
+    // Retained reference passed into the C callback to guarantee self outlives it.
+    nonisolated(unsafe) private var retainedSelf: Unmanaged<AccelerometerReader>?
 
     // MARK: Lifecycle
 
@@ -39,11 +48,16 @@ final class AccelerometerReader {
     }
 
     deinit {
+        // Release the retained reference taken in openDevice, then free the buffer.
+        retainedSelf?.release()
+        retainedSelf = nil
+        reportBufferPtr.deallocate()
+
         if let dev = device {
-            IOHIDDeviceClose(dev, Self.noOptions)
+            IOHIDDeviceClose(dev, kHIDNoOptions)
         }
         if let mgr = manager {
-            IOHIDManagerClose(mgr, Self.noOptions)
+            IOHIDManagerClose(mgr, kHIDNoOptions)
         }
     }
 
@@ -51,15 +65,21 @@ final class AccelerometerReader {
 
     func stop() {
         guard let dev = device else { return }
-        IOHIDDeviceClose(dev, Self.noOptions)
+        // Deregister callback before closing to prevent callbacks firing into freed memory.
+        IOHIDDeviceRegisterInputReportCallback(dev, reportBufferPtr, CFIndex(reportBufferSize), nil, nil)
+        IOHIDDeviceClose(dev, kHIDNoOptions)
         device = nil
         isAvailable = false
+
+        // Release the retained self reference now that the callback is unregistered.
+        retainedSelf?.release()
+        retainedSelf = nil
     }
 
     // MARK: Setup
 
     private func setupManager() {
-        let mgr = IOHIDManagerCreate(kCFAllocatorDefault, Self.noOptions)
+        let mgr = IOHIDManagerCreate(kCFAllocatorDefault, kHIDNoOptions)
         let matching: [String: Any] = [
             kIOHIDVendorIDKey  as String:       0x05AC,
             kIOHIDProductIDKey as String:       0x8104,
@@ -68,7 +88,7 @@ final class AccelerometerReader {
         ]
         IOHIDManagerSetDeviceMatching(mgr, matching as CFDictionary)
         IOHIDManagerScheduleWithRunLoop(mgr, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
-        IOHIDManagerOpen(mgr, Self.noOptions)
+        IOHIDManagerOpen(mgr, kHIDNoOptions)
         self.manager = mgr
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
@@ -91,7 +111,7 @@ final class AccelerometerReader {
     }
 
     private func openDevice(_ dev: IOHIDDevice) {
-        let openResult = IOHIDDeviceOpen(dev, Self.noOptions)
+        let openResult = IOHIDDeviceOpen(dev, kHIDNoOptions)
         guard openResult == kIOReturnSuccess else {
             print("[Accel] Failed to open device: 0x\(String(openResult, radix: 16))")
             return
@@ -100,17 +120,22 @@ final class AccelerometerReader {
         print("[Accel] Device opened — reportSize=\(reportSize)b")
         IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
 
+        // Retain self for the C callback lifetime.
+        // Balanced by release() in stop() or deinit.
+        let retained = Unmanaged.passRetained(self)
+        self.retainedSelf = retained
+
         IOHIDDeviceRegisterInputReportCallback(
-            dev, &reportBuffer, CFIndex(reportBuffer.count),
+            dev, reportBufferPtr, CFIndex(reportBufferSize),
             { ctx, _, _, _, _, report, length in
                 guard let ctx, length >= 18 else { return }
-                // Callback fires on the main run loop — safe to assume MainActor
+                // Callback fires on the main run loop — safe to assume MainActor.
                 let reader = Unmanaged<AccelerometerReader>.fromOpaque(ctx).takeUnretainedValue()
                 MainActor.assumeIsolated {
                     reader.handleReport(report, length: length)
                 }
             },
-            Unmanaged.passUnretained(self).toOpaque()
+            retained.toOpaque()
         )
 
         device = dev
