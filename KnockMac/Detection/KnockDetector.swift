@@ -133,7 +133,8 @@ final class KnockDetector {
     }
 
     private func buildAlgorithms(threshold: Double) -> [KnockAlgorithm] {
-        [
+        currentThreshold = threshold
+        return [
             MagnitudeThresholdAlgorithm(threshold: threshold),
             JerkAlgorithm(magnitudeThreshold: threshold),
             EnergyAlgorithm(magnitudeThreshold: threshold),
