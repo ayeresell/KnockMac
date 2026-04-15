@@ -199,24 +199,19 @@ final class KnockDetector {
         let initialPeak = (history.suffix(5) + [sample]).map { abs($0.magnitude - baseline) }.max()
                           ?? abs(sample.magnitude - baseline)
 
-        // For weak knocks (initial peak near threshold), skip post-trigger tracking:
-        // chassis resonance after the impulse inflates the reading. For strong knocks,
-        // the true peak often arrives a few samples after the trigger, so tracking is needed.
-        let trackingSamples = initialPeak < currentThreshold ? 0 : 5
-
         if !singleKnockOnly && firstKnockTime > 0 && gap >= minGap && gap <= maxGap {
             print("[KnockDetector] ✅ DOUBLE KNOCK triggered gap=\(String(format:"%.3f", gap))s (\(votes)/5 [\(votingAlgos.joined(separator:", "))])")
             lastTriggerTime = now
             firstKnockTime = 0
             pendingCallback = .double(gap: gap)
             pendingPeakDeviation = initialPeak
-            peakTrackingSamplesLeft = trackingSamples
+            peakTrackingSamplesLeft = 5
         } else {
             print("[KnockDetector] 1st knock (\(votes)/5 [\(votingAlgos.joined(separator:", "))]) initial=\(String(format:"%.3f", initialPeak))g")
             if !singleKnockOnly { firstKnockTime = now }
             pendingCallback = .single
             pendingPeakDeviation = initialPeak
-            peakTrackingSamplesLeft = trackingSamples
+            peakTrackingSamplesLeft = 5
         }
     }
 
