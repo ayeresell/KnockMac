@@ -112,6 +112,10 @@ final class KnockDetector {
     }
     private var pendingCallback: PendingCallback? = nil
     private var pendingPeakDeviation: Double = 0
+    // How many more high-vote samples we still accept for peak tracking.
+    // Capped at 5 (~50 ms at 100 Hz) to exclude chassis resonance oscillations
+    // that arrive after the primary impulse and would inflate light-tap readings.
+    private var peakTrackingSamplesLeft: Int = 0
 
     init() {
         reloadSettings()
