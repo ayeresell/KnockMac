@@ -161,9 +161,11 @@ final class KnockDetector {
 
         if votes >= 3 {
             consecutiveHighVotes += 1
-            // Keep tracking peak while knock is active
-            if pendingCallback != nil {
+            // Track peak only within the first ~50 ms (5 samples) after trigger.
+            // Beyond that, chassis resonance oscillations would inflate light-tap readings.
+            if pendingCallback != nil && peakTrackingSamplesLeft > 0 {
                 pendingPeakDeviation = max(pendingPeakDeviation, abs(sample.magnitude - baseline))
+                peakTrackingSamplesLeft -= 1
             }
         } else {
             consecutiveHighVotes = 0
