@@ -1,9 +1,10 @@
 import SwiftUI
 import AudioToolbox
 import CoreGraphics
-import ScreenCaptureKit
 
 struct OnboardingView: View {
+    var startAtStep: Int = 0
+
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var step = 0
 
@@ -13,11 +14,14 @@ struct OnboardingView: View {
     @State private var sysCheckReader: AccelerometerReader?
     
     // Step 2 (Sensitivity) state
-    @State private var sensitivityMags: [Double] = []
+    // 0 = least sensitive (threshold 0.10g), 1 = most sensitive (threshold 0.02g)
+    @State private var sensitivitySlider: Double = 0.5
+    @State private var knockFlash: Bool = false
+    @State private var knockMarkerPos: Double = 0
+    @State private var knockMarkerOpacity: Double = 0
     
-    // Step 3 (Speed) state
-    @State private var speedGaps: [Double] = []
-    @State private var speedMags: [Double] = []
+    // Step 3 (Verify) state
+    @State private var verifyKnockCount: Int = 0
     
     // Local knock detector just for calibration
     @State private var calibrationReader: AccelerometerReader?
@@ -72,21 +76,9 @@ struct OnboardingView: View {
                                 Spacer()
                                 if !hasScreenCapture {
                                     Button("Grant") {
-                                        // Temporarily lower window level so the system TCC dialog appears above
-                                        let onboardingWindow = NSApp.windows.first(where: { $0.title == "KnockMac Setup" })
-                                        onboardingWindow?.level = .normal
-                                        let granted = CGRequestScreenCaptureAccess()
-                                        if granted {
-                                            hasScreenCapture = true
-                                            onboardingWindow?.level = .floating
-                                        } else {
-                                            // Permission dialog shown or denied — restore level after delay,
-                                            // then open System Settings. Timer will pick up if user enables it there.
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                                onboardingWindow?.level = .floating
-                                            }
-                                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
-                                        }
+                                        // Lower window so TCC dialog appears above; level restored via onChange(of: hasScreenCapture)
+                                        NSApp.windows.first(where: { $0.title == "KnockMac Setup" })?.level = .normal
+                                        CGRequestScreenCaptureAccess()
                                     }
                                     .buttonStyle(.bordered)
                                     .controlSize(.small)
@@ -98,14 +90,16 @@ struct OnboardingView: View {
                         .background(Color.secondary.opacity(0.1))
                         .cornerRadius(12)
                         
-                        Spacer()
-                        
-                        Button("Continue") {
-                            withAnimation { step = 1 }
+                        Spacer(minLength: 0)
+
+                        if hasAccelerometer && hasScreenCapture {
+                            Button("Continue") {
+                                withAnimation { step = 1 }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .padding(.bottom, 20)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .disabled(!hasAccelerometer || !hasScreenCapture)
                     }
                     .padding(40)
                     .transition(.opacity)
@@ -116,6 +110,11 @@ struct OnboardingView: View {
                     .onReceive(Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()) { _ in
                         if !hasScreenCapture {
                             refreshScreenCaptureAccess()
+                        }
+                    }
+                    .onChange(of: hasScreenCapture) { _, granted in
+                        if granted {
+                            NSApp.windows.first(where: { $0.title == "KnockMac Setup" })?.level = .floating
                         }
                     }
                 } else if step == 1 {
@@ -172,132 +171,151 @@ struct OnboardingView: View {
                     .padding(40)
                     .transition(.opacity)
                 } else if step == 2 {
-                    // Step 2: Calibration - Sensitivity
+                    // Step 2: Sensitivity slider
                     VStack(spacing: 20) {
                         Text("Step 1: Sensitivity")
                             .font(.title)
                             .fontWeight(.bold)
-                        
-                        Text("Knock ONCE firmly on your Mac.")
+
+                        Text("Knock on your Mac and adjust the slider\nuntil it feels right.")
                             .font(.headline)
                             .multilineTextAlignment(.center)
-                        
-                        Text("We need to learn your natural knocking force.\nPlease do this 3 times.")
+
+                        Text("Too many false triggers → move left.\nKnocks not detected → move right.")
+                            .font(.caption)
                             .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
-                        
+
                         Spacer()
-                        
-                        if sensitivityMags.count == 3 {
-                            VStack(spacing: 10) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 60))
-                                    .foregroundColor(.green)
-                                Text("Great! Force recorded.")
-                                    .font(.headline)
-                                Text("Average force: \(String(format: "%.3f", sensitivityMags.reduce(0, +) / 3.0))g")
+
+                        // Knock indicator
+                        ZStack {
+                            Circle()
+                                .fill(knockFlash ? Color.green.opacity(0.25) : Color.secondary.opacity(0.08))
+                                .frame(width: 90, height: 90)
+                                .animation(.easeOut(duration: 0.35), value: knockFlash)
+                            Image(systemName: "hand.tap.fill")
+                                .font(.system(size: 38))
+                                .foregroundColor(knockFlash ? .green : .secondary)
+                                .animation(.easeOut(duration: 0.35), value: knockFlash)
+                        }
+
+                        // Slider
+                        VStack(spacing: 8) {
+                            HStack {
+                                Spacer()
+                                Text(sensitivityLabel)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(sensitivityLabelColor)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(sensitivityLabelColor.opacity(0.12))
+                                    .cornerRadius(6)
+                                Spacer()
                             }
-                        } else {
-                            VStack {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .padding()
-                                Text("Waiting for knock \(sensitivityMags.count + 1) of 3...")
-                                    .font(.subheadline)
+
+                            ZStack {
+                                Slider(value: $sensitivitySlider, in: 0...1)
+                                // Knock marker: shows where the detected tap falls on the scale
+                                GeometryReader { geo in
+                                    let thumb: CGFloat = 11
+                                    let x = thumb + (geo.size.width - thumb * 2) * knockMarkerPos
+                                    Capsule()
+                                        .fill(Color.green)
+                                        .frame(width: 4, height: 18)
+                                        .position(x: x, y: geo.size.height / 2)
+                                        .opacity(knockMarkerOpacity)
+                                        .animation(.easeOut(duration: 0.15), value: knockMarkerPos)
+                                }
+                                .allowsHitTesting(false)
+                            }
+                            HStack {
+                                Text("Less sensitive")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Text("More sensitive")
+                                    .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
                         }
-                        
+                        .padding(.horizontal, 8)
+
                         Spacer()
-                        
+
                         Button("Next") {
                             withAnimation { step = 3 }
-                            startSpeedCalibration()
+                            startVerificationCalibration()
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
-                        .disabled(sensitivityMags.count < 3)
                     }
                     .padding(40)
                     .transition(.opacity)
+                    .onAppear { startSensitivityCalibration() }
                 } else if step == 3 {
-                    // Step 3: Calibration - Speed
+                    // Step 3: Verify
                     VStack(spacing: 20) {
-                        Text("Step 2: Speed")
+                        Text("Step 2: Test it out")
                             .font(.title)
                             .fontWeight(.bold)
-                        
-                        Text("Now DOUBLE-KNOCK with your natural speed.")
+
+                        Text("Double-knock to confirm\nyour settings work.")
                             .font(.headline)
                             .multilineTextAlignment(.center)
-                        
-                        Text("We will measure the gap between your knocks.\nPlease do this 3 times.")
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-                        
+
                         Spacer()
-                        
-                        if speedGaps.count == 3 {
-                            VStack(spacing: 10) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 60))
-                                    .foregroundColor(.green)
-                                Text("Perfect! Speed recorded.")
-                                    .font(.headline)
-                                Text("Average gap: \(String(format: "%.3f", speedGaps.reduce(0, +) / 3.0))s")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        } else {
-                            VStack {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .padding()
-                                Text("Waiting for double-knock \(speedGaps.count + 1) of 3...")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
+
+                        ZStack {
+                            Circle()
+                                .fill(verifyKnockCount > 0 ? Color.green.opacity(0.25) : Color.secondary.opacity(0.08))
+                                .frame(width: 90, height: 90)
+                                .animation(.easeOut(duration: 0.35), value: verifyKnockCount)
+                            Image(systemName: verifyKnockCount > 0 ? "checkmark" : "hand.tap.fill")
+                                .font(.system(size: 38))
+                                .foregroundColor(verifyKnockCount > 0 ? .green : .secondary)
+                                .animation(.easeOut(duration: 0.35), value: verifyKnockCount)
                         }
-                        
+
+                        if verifyKnockCount > 0 {
+                            Text("Works perfectly!")
+                                .font(.headline)
+                                .foregroundColor(.green)
+                        } else {
+                            Text("Waiting for double-knock…")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+
                         Spacer()
-                        
+
                         Button("Finish") {
                             finishOnboarding()
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
-                        .disabled(speedGaps.count < 3)
+                        .disabled(verifyKnockCount < 1)
                     }
                     .padding(40)
                     .transition(.opacity)
                 }
             }
         }
-        .frame(width: 500, height: 400)
+        .frame(width: 500, height: 480)
+        .onAppear {
+            if startAtStep > 0 {
+                step = startAtStep
+            }
+        }
         .onDisappear {
             stopCalibration()
             sysCheckReader?.stop()
         }
     }
     
-    // CGPreflightScreenCaptureAccess() returns false for new debug builds even when
-    // permission is already granted in System Settings (TCC doesn't recognise the new
-    // binary signature). Verify with an actual ScreenCaptureKit call as a fallback.
     private func refreshScreenCaptureAccess() {
-        if CGPreflightScreenCaptureAccess() {
-            hasScreenCapture = true
-            return
-        }
-        Task {
-            do {
-                _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-                await MainActor.run { hasScreenCapture = true }
-            } catch {
-                await MainActor.run { hasScreenCapture = false }
-            }
-        }
+        hasScreenCapture = CGPreflightScreenCaptureAccess()
     }
 
     private func runSystemCheck() {
@@ -314,67 +332,91 @@ struct OnboardingView: View {
         }
     }
     
+    // Maps slider 0…1 → threshold 0.10g…0.02g
+    private var sliderThreshold: Double {
+        0.10 - sensitivitySlider * 0.08
+    }
+
+    private var sensitivityLabel: String {
+        let t = sliderThreshold
+        switch t {
+        case ..<0.03: return "Very sensitive — light touch"
+        case ..<0.05: return "Sensitive — gentle knock"
+        case ..<0.07: return "Medium — normal knock"
+        default:       return "Firm knock required"
+        }
+    }
+
+    private var sensitivityLabelColor: Color {
+        let t = sliderThreshold
+        switch t {
+        case ..<0.03: return .blue
+        case ..<0.05: return .green
+        case ..<0.07: return .orange
+        default:       return .red
+        }
+    }
+
     private func startSensitivityCalibration() {
         stopCalibration()
-        sensitivityMags.removeAll()
-        
+
         let reader = AccelerometerReader()
         let detector = KnockDetector()
-        
-        // Very sensitive, gap doesn't matter since we only look at single knocks
-        detector.setCalibrationMode(threshold: 0.02, maxGap: 1.0)
-        
-        detector.onSingleKnock = { mag in
+        // Always use minimum threshold during sensitivity calibration so ALL knocks
+        // are detected regardless of slider position. The slider is purely visual here —
+        // it sets the saved threshold, not the detection threshold.
+        detector.setCalibrationMode(threshold: 0.02)
+        detector.singleKnockOnly = true
+
+        detector.onSingleKnock = { deviation in
             DispatchQueue.main.async {
-                guard self.sensitivityMags.count < 3 else { return }
-                self.sensitivityMags.append(mag)
-                AudioServicesPlaySystemSound(1108) // Shutter sound
-                
-                if self.sensitivityMags.count == 3 {
-                    self.stopCalibration()
+                AudioServicesPlaySystemSound(1108)
+                self.knockFlash = true
+                // Position marker: (0.10 - deviation) / 0.08 maps deviation → slider space.
+                // Strong knock (high deviation) → marker left; light knock → marker right.
+                self.knockMarkerPos = min(1.0, max(0.0, (0.10 - deviation) / 0.08))
+                self.knockMarkerOpacity = 1.0
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    self.knockFlash = false
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    withAnimation(.easeOut(duration: 0.6)) {
+                        self.knockMarkerOpacity = 0
+                    }
                 }
             }
         }
-        
+
         reader.onSample = { sample in
             detector.feed(sample)
         }
-        
+
         self.calibrationReader = reader
         self.calibrationDetector = detector
     }
-    
-    private func startSpeedCalibration() {
+
+    private func startVerificationCalibration() {
         stopCalibration()
-        speedGaps.removeAll()
-        speedMags.removeAll()
-        
+        verifyKnockCount = 0
+
         let reader = AccelerometerReader()
         let detector = KnockDetector()
-        
-        // Use average of sensitivity mags temporarily to be realistic
-        let avgSensitivity = sensitivityMags.isEmpty ? 0.06 : (sensitivityMags.reduce(0, +) / Double(sensitivityMags.count))
-        let temporaryThreshold = max(0.02, min(avgSensitivity * 0.7, 0.20))
-        
-        detector.setCalibrationMode(threshold: temporaryThreshold, maxGap: 1.5)
-        
-        detector.onDoubleKnockWithGap = { gap, mag in
+        detector.setCalibrationMode(threshold: sliderThreshold)
+
+        detector.onDoubleKnockWithGap = { _, _ in
             DispatchQueue.main.async {
-                guard self.speedGaps.count < 3 else { return }
-                self.speedGaps.append(gap)
-                self.speedMags.append(mag)
-                AudioServicesPlaySystemSound(1108) // Shutter sound
-                
-                if self.speedGaps.count == 3 {
+                self.verifyKnockCount += 1
+                AudioServicesPlaySystemSound(1108)
+                if self.verifyKnockCount >= 1 {
                     self.stopCalibration()
                 }
             }
         }
-        
+
         reader.onSample = { sample in
             detector.feed(sample)
         }
-        
+
         self.calibrationReader = reader
         self.calibrationDetector = detector
     }
@@ -388,32 +430,23 @@ struct OnboardingView: View {
     private func finishOnboarding() {
         stopCalibration()
         
-        // Calculate final threshold based on all recorded magnitudes
-        let allMags = sensitivityMags + speedMags
-        if !allMags.isEmpty {
-            let avgMag = allMags.reduce(0, +) / Double(allMags.count)
-            // Save threshold (e.g. 70% of their average tap force, bounded)
-            let newThreshold = max(0.02, min(avgMag * 0.7, 0.20))
-            UserDefaults.standard.set(newThreshold, forKey: "knockThreshold")
-            print("[Onboarding] Final calibrated threshold to \(newThreshold)")
-        }
-        
-        // Calculate final speed gap based on recorded gaps
-        if !speedGaps.isEmpty {
-            let maxRecordedGap = speedGaps.max() ?? 0.45
-            // Save gap + 0.15s buffer (max 0.8s)
-            let newMaxGap = min(maxRecordedGap + 0.15, 0.80)
-            UserDefaults.standard.set(newMaxGap, forKey: "knockMaxGap")
-            print("[Onboarding] Final calibrated max gap to \(newMaxGap)")
-        }
+        // Save with 25% headroom so natural force variation still registers.
+        // Clamped: 0.02g (floor) … 0.08g (ceiling).
+        let finalThreshold = min(0.10, max(0.02, sliderThreshold * 0.75))
+        UserDefaults.standard.set(finalThreshold, forKey: "knockThreshold")
+        print("[Onboarding] Final calibrated threshold to \(finalThreshold) (slider was \(sliderThreshold))")
         
         hasCompletedOnboarding = true
-        
+
         // Notify the KnockController to reload settings and start listening
         NotificationCenter.default.post(name: NSNotification.Name("OnboardingCompleted"), object: nil)
-        
-        // Close window
-        NSApp.windows.first(where: { $0.title == "KnockMac Setup" })?.close()
+
+        // Give SwiftUI a moment to insert the MenuBarExtra (isInserted just became true)
+        // before this window closes. Without the delay the app briefly has no active
+        // scenes and applicationShouldTerminate may fire before the icon is registered.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSApp.windows.first(where: { $0.title == "KnockMac Setup" })?.close()
+        }
     }
 }
 
@@ -425,24 +458,44 @@ class OnboardingWindowManager {
     
     func showIfNeeded() {
         guard !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") else { return }
-        
+        show()
+    }
+
+    func resetAndShow() {
+        // Close and discard existing window so a fresh OnboardingView is created.
+        window?.close()
+        window = nil
+        UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+        show(startAtStep: 1)
+    }
+
+    private func show(startAtStep: Int = 0) {
         if window == nil {
-            let hostingController = NSHostingController(rootView: OnboardingView())
+            let hostingController = NSHostingController(rootView: OnboardingView(startAtStep: startAtStep))
             let newWindow = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 480),
                 styleMask: [.titled, .closable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
-            newWindow.center()
             newWindow.title = "KnockMac Setup"
             newWindow.isReleasedWhenClosed = false
             newWindow.contentViewController = hostingController
-            newWindow.level = .floating // Ensure it shows up above other things
+            newWindow.level = .floating
+            newWindow.center()
             self.window = newWindow
         }
-        
+
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        DispatchQueue.main.async {
+            if let window = self.window, let screen = window.screen ?? NSScreen.main {
+                let screenFrame = screen.frame
+                let windowFrame = window.frame
+                let x = screenFrame.midX - windowFrame.width / 2
+                let y = screenFrame.midY - windowFrame.height / 2
+                window.setFrameOrigin(NSPoint(x: x, y: y))
+            }
+        }
     }
 }
