@@ -63,6 +63,22 @@ final class AccelerometerReader {
 
     // MARK: Control
 
+    /// Re-opens and re-registers the HID callback.
+    /// Call this whenever another reader may have stolen the device callback (e.g. after calibration).
+    func rebind() {
+        if let dev = device {
+            IOHIDDeviceRegisterInputReportCallback(dev, reportBufferPtr, CFIndex(reportBufferSize), nil, nil)
+            IOHIDDeviceClose(dev, kHIDNoOptions)
+            device = nil
+            isAvailable = false
+            retainedSelf?.release()
+            retainedSelf = nil
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.bindDevice()
+        }
+    }
+
     func stop() {
         guard let dev = device else { return }
         // Deregister callback before closing to prevent callbacks firing into freed memory.
