@@ -86,7 +86,6 @@ final class KnockDetector {
     var singleKnockOnly: Bool = false
 
     private var algorithms: [KnockAlgorithm] = []
-    private var currentThreshold: Double = 0.06
 
     private var history: [AccelSample] = []
     private var baselineBuffer: [Double] = []
