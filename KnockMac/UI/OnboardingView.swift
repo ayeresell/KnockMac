@@ -1,13 +1,14 @@
 import SwiftUI
 import AudioToolbox
 import CoreGraphics
+import ScreenCaptureKit
 
 struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var step = 0
-    
+
     // Step 0 (System Check) state
-    @State private var hasScreenCapture = CGPreflightScreenCaptureAccess()
+    @State private var hasScreenCapture = false
     @State private var hasAccelerometer = false
     @State private var sysCheckReader: AccelerometerReader?
     
@@ -71,9 +72,19 @@ struct OnboardingView: View {
                                 Spacer()
                                 if !hasScreenCapture {
                                     Button("Grant") {
+                                        // Temporarily lower window level so the system TCC dialog appears above
+                                        let onboardingWindow = NSApp.windows.first(where: { $0.title == "KnockMac Setup" })
+                                        onboardingWindow?.level = .normal
                                         let granted = CGRequestScreenCaptureAccess()
-                                        hasScreenCapture = granted
-                                        if !granted {
+                                        if granted {
+                                            hasScreenCapture = true
+                                            onboardingWindow?.level = .floating
+                                        } else {
+                                            // Permission dialog shown or denied — restore level after delay,
+                                            // then open System Settings. Timer will pick up if user enables it there.
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                                onboardingWindow?.level = .floating
+                                            }
                                             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
                                         }
                                     }
@@ -100,10 +111,11 @@ struct OnboardingView: View {
                     .transition(.opacity)
                     .onAppear {
                         runSystemCheck()
+                        refreshScreenCaptureAccess()
                     }
                     .onReceive(Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()) { _ in
                         if !hasScreenCapture {
-                            hasScreenCapture = CGPreflightScreenCaptureAccess()
+                            refreshScreenCaptureAccess()
                         }
                     }
                 } else if step == 1 {
@@ -270,6 +282,24 @@ struct OnboardingView: View {
         }
     }
     
+    // CGPreflightScreenCaptureAccess() returns false for new debug builds even when
+    // permission is already granted in System Settings (TCC doesn't recognise the new
+    // binary signature). Verify with an actual ScreenCaptureKit call as a fallback.
+    private func refreshScreenCaptureAccess() {
+        if CGPreflightScreenCaptureAccess() {
+            hasScreenCapture = true
+            return
+        }
+        Task {
+            do {
+                _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+                await MainActor.run { hasScreenCapture = true }
+            } catch {
+                await MainActor.run { hasScreenCapture = false }
+            }
+        }
+    }
+
     private func runSystemCheck() {
         guard !hasAccelerometer else { return }
         sysCheckReader = AccelerometerReader()
