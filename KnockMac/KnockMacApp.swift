@@ -20,6 +20,11 @@ struct KnockMacApp: App {
         MenuBarExtra("KnockMac", systemImage: appState.isActive ? "hand.tap.fill" : "hand.tap", isInserted: $hasCompletedOnboarding) {
             MenuBarView(appState: appState)
         }
+
+        // Keeps the app alive while MenuBarExtra is hidden during onboarding.
+        // Without this SwiftUI sees zero active scenes and auto-terminates,
+        // which would also block macOS "Quit & Reopen" after permission grants.
+        Settings { EmptyView() }
     }
 }
 
@@ -36,5 +41,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Show onboarding window if first launch.
         OnboardingWindowManager.shared.showIfNeeded()
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
     }
 }
