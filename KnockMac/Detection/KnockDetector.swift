@@ -161,11 +161,16 @@ final class KnockDetector {
 
         if votes >= 3 {
             consecutiveHighVotes += 1
-            // Track peak only within the first ~50 ms (5 samples) after trigger.
-            // Beyond that, chassis resonance oscillations would inflate light-tap readings.
+            // Track peak until signal starts declining — that's where the true impulse ends
+            // and chassis resonance begins. Stop immediately on first drop.
             if pendingCallback != nil && peakTrackingSamplesLeft > 0 {
-                pendingPeakDeviation = max(pendingPeakDeviation, abs(sample.magnitude - baseline))
-                peakTrackingSamplesLeft -= 1
+                let current = abs(sample.magnitude - baseline)
+                if current < pendingPeakDeviation {
+                    peakTrackingSamplesLeft = 0
+                } else {
+                    pendingPeakDeviation = current
+                    peakTrackingSamplesLeft -= 1
+                }
             }
         } else {
             consecutiveHighVotes = 0
