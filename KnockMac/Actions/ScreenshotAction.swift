@@ -8,6 +8,21 @@ enum ScreenshotAction {
 
     static func captureFullScreen() {
         print("[Screenshot] Starting capture...")
+
+        if !CGPreflightScreenCaptureAccess() {
+            print("[Screenshot] Requesting screen capture access...")
+            let granted = CGRequestScreenCaptureAccess()
+            if !granted {
+                print("[Screenshot] Screen capture access denied. Please enable it in System Settings.")
+                DispatchQueue.main.async {
+                    NSWorkspace.shared.open(
+                        URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
+                    )
+                }
+                return
+            }
+        }
+
         Task {
             do {
                 let image = try await captureViaScreenCaptureKit()

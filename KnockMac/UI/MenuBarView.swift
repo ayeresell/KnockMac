@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MenuBarView: View {
-    @ObservedObject var appState: AppState
+    @ObservedObject var appState: KnockController
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

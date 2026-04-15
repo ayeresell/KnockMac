@@ -7,27 +7,37 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3505DDE26E0F9E1F83D36E51 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9E45BD47CD9F213438AAFC /* SettingsStore.swift */; };
+		549608DE93F19F16FFDB4791 /* USBWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5742C684B344CE591FC81165 /* USBWatcher.swift */; };
+		72A43CD1B9691273D093A401 /* LidAngleSensor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B75904F6866E9C48F3AA9F54 /* LidAngleSensor.swift */; };
+		732D57353CBC878907D1F288 /* KnockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14150E502C3560D21F6F8FD9 /* KnockController.swift */; };
 		83BB6348EFA8E057C3BFC11D /* AccelerometerReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */; };
 		88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */; };
+		A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */; };
 		B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */; };
 		D1F595BB74719F42B2C953BF /* ScreenCaptureKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */; };
-		D2CC0D66494C7A1561828B74 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62D671586C8E2ACF54EBD17 /* AppState.swift */; };
 		E087FD2C6A2E4C15D244BDC6 /* KnockMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA68A86045964D1FF5438353 /* KnockMacApp.swift */; };
+		F24F830E7EBC6A6395BAE7F3 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335D88182787E06CBE84A200 /* OnboardingView.swift */; };
 		F50B04CEF6E7A679CE3F2C1D /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFA5E01B737331DCF00B3989 /* IOKit.framework */; };
 		FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9308DC0110F85D3166526F13 /* KnockDetector.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		14150E502C3560D21F6F8FD9 /* KnockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockController.swift; sourceTree = "<group>"; };
+		335D88182787E06CBE84A200 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
+		5742C684B344CE591FC81165 /* USBWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USBWatcher.swift; sourceTree = "<group>"; };
 		6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		72F28255E26A4FEA48DF3AE6 /* KnockMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KnockMac.entitlements; sourceTree = "<group>"; };
 		9308DC0110F85D3166526F13 /* KnockDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockDetector.swift; sourceTree = "<group>"; };
 		AA68A86045964D1FF5438353 /* KnockMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockMacApp.swift; sourceTree = "<group>"; };
 		ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccelerometerReader.swift; sourceTree = "<group>"; };
 		B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotAction.swift; sourceTree = "<group>"; };
+		B75904F6866E9C48F3AA9F54 /* LidAngleSensor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidAngleSensor.swift; sourceTree = "<group>"; };
+		BF9E45BD47CD9F213438AAFC /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		CFA5E01B737331DCF00B3989 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = IOKit.framework; sourceTree = "<group>"; };
 		D225D3074FA34935A37734CF /* KnockMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KnockMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E62D671586C8E2ACF54EBD17 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +58,8 @@
 			children = (
 				ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */,
 				9308DC0110F85D3166526F13 /* KnockDetector.swift */,
+				B75904F6866E9C48F3AA9F54 /* LidAngleSensor.swift */,
+				5742C684B344CE591FC81165 /* USBWatcher.swift */,
 			);
 			path = Detection;
 			sourceTree = "<group>";
@@ -56,6 +68,7 @@
 			isa = PBXGroup;
 			children = (
 				6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */,
+				335D88182787E06CBE84A200 /* OnboardingView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -63,6 +76,7 @@
 		599768C0087C4532161A5EBC /* Actions */ = {
 			isa = PBXGroup;
 			children = (
+				EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */,
 				B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */,
 			);
 			path = Actions;
@@ -71,9 +85,10 @@
 		A09FD0D21B60D360A73718EE /* KnockMac */ = {
 			isa = PBXGroup;
 			children = (
-				E62D671586C8E2ACF54EBD17 /* AppState.swift */,
+				14150E502C3560D21F6F8FD9 /* KnockController.swift */,
 				72F28255E26A4FEA48DF3AE6 /* KnockMac.entitlements */,
 				AA68A86045964D1FF5438353 /* KnockMacApp.swift */,
+				BF9E45BD47CD9F213438AAFC /* SettingsStore.swift */,
 				599768C0087C4532161A5EBC /* Actions */,
 				2BAABA5B34C317BEC5FBFCC4 /* Detection */,
 				406E6E9139B0D827520F0FCA /* UI */,
@@ -168,11 +183,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				83BB6348EFA8E057C3BFC11D /* AccelerometerReader.swift in Sources */,
-				D2CC0D66494C7A1561828B74 /* AppState.swift in Sources */,
+				A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */,
+				732D57353CBC878907D1F288 /* KnockController.swift in Sources */,
 				FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */,
 				E087FD2C6A2E4C15D244BDC6 /* KnockMacApp.swift in Sources */,
+				72A43CD1B9691273D093A401 /* LidAngleSensor.swift in Sources */,
 				B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */,
+				F24F830E7EBC6A6395BAE7F3 /* OnboardingView.swift in Sources */,
 				88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */,
+				3505DDE26E0F9E1F83D36E51 /* SettingsStore.swift in Sources */,
+				549608DE93F19F16FFDB4791 /* USBWatcher.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
