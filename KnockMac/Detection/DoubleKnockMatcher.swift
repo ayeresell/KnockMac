@@ -36,12 +36,28 @@ final class DoubleKnockMatcher {
 
         if let prev = lastEvent {
             let gap = event.time - prev.time
-            if gap >= minGap && gap <= maxGap && shapeSimilar(prev, event) {
-                onDouble?(gap, event.peak)
-                lastEvent = nil
+            let ampRatio = max(prev.peak, event.peak) / max(min(prev.peak, event.peak), 0.0001)
+            if gap < minGap {
+                print("[Matcher] 2nd knock too fast gap=\(String(format: "%.3f", gap))s (min=\(minGap)s) — stored as new first")
+                lastEvent = event
                 return
             }
+            if gap > maxGap {
+                print("[Matcher] 2nd knock too slow gap=\(String(format: "%.3f", gap))s (max=\(maxGap)s) — stored as new first")
+                lastEvent = event
+                return
+            }
+            if !shapeSimilar(prev, event) {
+                print("[Matcher] shape mismatch ampRatio=\(String(format: "%.2f", ampRatio)) (max=\(maxAmpRatio)) — stored as new first")
+                lastEvent = event
+                return
+            }
+            print("[Matcher] ✓ pair accepted gap=\(String(format: "%.3f", gap))s ampRatio=\(String(format: "%.2f", ampRatio))")
+            onDouble?(gap, event.peak)
+            lastEvent = nil
+            return
         }
+        print("[Matcher] 1st knock stored peak=\(String(format: "%.3f", event.peak))g attack=\(event.attackSamples) — waiting for 2nd")
         lastEvent = event
     }
 
