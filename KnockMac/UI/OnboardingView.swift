@@ -329,18 +329,22 @@ class OnboardingWindowManager {
     
     func showIfNeeded() {
         guard !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") else { return }
-        show()
+        show(title: "KnockMac Setup")
     }
 
-    func resetAndShow() {
+    func showSettings() {
         // Close and discard existing window so a fresh OnboardingView is created.
         window?.close()
         window = nil
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
-        show(startAtStep: 1)
+        show(title: "KnockMac Settings", startAtStep: 1)
     }
 
-    private func show(startAtStep: Int = 0) {
+    func closeWindow() {
+        window?.close()
+    }
+
+    private func show(title: String, startAtStep: Int = 0) {
         if window == nil {
             let hostingController = NSHostingController(rootView: OnboardingView(startAtStep: startAtStep))
             let newWindow = NSWindow(
@@ -349,12 +353,14 @@ class OnboardingWindowManager {
                 backing: .buffered,
                 defer: false
             )
-            newWindow.title = "KnockMac Setup"
+            newWindow.title = title
             newWindow.isReleasedWhenClosed = false
             newWindow.contentViewController = hostingController
             newWindow.level = .floating
             newWindow.center()
             self.window = newWindow
+        } else {
+            window?.title = title
         }
 
         window?.makeKeyAndOrderFront(nil)
