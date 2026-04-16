@@ -31,91 +31,84 @@ struct OnboardingView: View {
         VStack {
             Group {
                 if step == 0 {
-                    // Step 0: Welcome & System Check
-                    VStack(spacing: 20) {
+                    // Step 0: Animated System Check
+                    VStack(spacing: 16) {
                         Image(systemName: "laptopcomputer.and.iphone")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 80, height: 80)
+                            .frame(width: 72, height: 72)
                             .foregroundColor(.blue)
-                        
+                            .scaleEffect(iconPulse ? 1.05 : 1.0)
+                            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: iconPulse)
+
                         Text("System Check")
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                        
-                        Text("Take screenshots just by double-knocking your Mac.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.bottom, 10)
-                        
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Image(systemName: "info.circle.fill")
-                                    .foregroundColor(.blue)
-                                    .frame(width: 24)
-                                Text("macOS \(ProcessInfo.processInfo.operatingSystemVersionString)")
+
+                        HStack(spacing: 6) {
+                            if !allChecksFinished {
+                                ProgressView().scaleEffect(0.55)
+                            } else if allChecksPassed {
+                                Image(systemName: "checkmark.seal.fill").foregroundColor(.green)
                             }
-                            
-                            HStack {
-                                Image(systemName: hasAccelerometer ? "checkmark.circle.fill" : "circle.dashed")
-                                    .foregroundColor(hasAccelerometer ? .green : .gray)
-                                    .frame(width: 24)
-                                Text("Accelerometer (Apple Silicon)")
-                                Spacer()
-                                if !hasAccelerometer {
-                                    ProgressView().scaleEffect(0.6)
+                            Text(statusLine)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .animation(.easeOut(duration: 0.2), value: statusLine)
+                        }
+                        .frame(height: 20)
+
+                        VStack(spacing: 10) {
+                            ForEach(checks.indices, id: \.self) { idx in
+                                SystemCheckRow(check: checks[idx]) {
+                                    NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
+                                    CGRequestScreenCaptureAccess()
                                 }
-                            }
-                            
-                            HStack {
-                                Image(systemName: hasScreenCapture ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                                    .foregroundColor(hasScreenCapture ? .green : .orange)
-                                    .frame(width: 24)
-                                Text("Screen Recording")
-                                Spacer()
-                                if !hasScreenCapture {
-                                    Button("Grant") {
-                                        // Lower window so TCC dialog appears above; level restored via onChange(of: hasScreenCapture)
-                                        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-                                        CGRequestScreenCaptureAccess()
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
-                                }
+                                .transition(.opacity)
                             }
                         }
-                        .padding()
-                        .frame(width: 380)
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(12)
-                        
+                        .padding(14)
+                        .frame(width: 420)
+                        .background(Color.secondary.opacity(0.08))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                        )
+                        .cornerRadius(10)
+
                         Spacer(minLength: 0)
 
-                        if hasAccelerometer && hasScreenCapture {
+                        if allChecksPassed {
                             Button("Continue") {
                                 withAnimation { step = 1 }
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
-                            .padding(.bottom, 20)
+                            .transition(.opacity.combined(with: .scale))
                         }
                     }
-                    .padding(40)
+                    .padding(30)
                     .transition(.opacity)
                     .onAppear {
-                        runSystemCheck()
+                        iconPulse = true
                         refreshScreenCaptureAccess()
-                    }
-                    .onReceive(Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()) { _ in
-                        if !hasScreenCapture {
-                            refreshScreenCaptureAccess()
+                        if !checksStarted {
+                            checksStarted = true
+                            runSystemCheck()
+                            runAnimatedDiagnostic()
                         }
                     }
+                    .onReceive(Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()) { _ in
+                        if !hasScreenCapture { refreshScreenCaptureAccess() }
+                    }
                     .onChange(of: hasScreenCapture) { _, granted in
+                        updateCheck(id: "permission", granted: granted)
                         if granted {
                             NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .floating
                         }
+                    }
+                    .onChange(of: hasAccelerometer) { _, ok in
+                        updateCheck(id: "sensor", granted: ok)
                     }
                 } else if step == 1 {
                     // Step 1: Explanation
