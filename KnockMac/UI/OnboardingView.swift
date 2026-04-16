@@ -328,7 +328,7 @@ class OnboardingWindowManager {
     private var window: NSWindow?
     
     func showIfNeeded() {
-        guard !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") else { return }
+        guard !KnockController.hasRequiredPermissions() else { return }
         show(title: "KnockMac Setup")
     }
 
