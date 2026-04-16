@@ -104,6 +104,7 @@ struct OnboardingView: View {
                     .onAppear {
                         iconPulse = true
                         refreshScreenCaptureAccess()
+                        triggerScreenRecordingRequestIfNeeded()
                         if !checksStarted {
                             checksStarted = true
                             runSystemCheck()
