@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1E2712CE265682F72312837F /* AdaptiveBaseline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */; };
 		4874DF685AC9CF1669C8CD20 /* Placeholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1108EC81C76695F005910E /* Placeholder.swift */; };
 		5586FCF39C9075C4C7CFE06F /* AdaptiveBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8420B36C4D8F68DC4609BC6 /* AdaptiveBaselineTests.swift */; };
 		732D57353CBC878907D1F288 /* KnockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14150E502C3560D21F6F8FD9 /* KnockController.swift */; };
@@ -41,6 +42,7 @@
 		7098DD185D0005BCD5781516 /* KnockMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KnockMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		72F28255E26A4FEA48DF3AE6 /* KnockMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KnockMac.entitlements; sourceTree = "<group>"; };
 		9308DC0110F85D3166526F13 /* KnockDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockDetector.swift; sourceTree = "<group>"; };
+		9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveBaseline.swift; sourceTree = "<group>"; };
 		AA68A86045964D1FF5438353 /* KnockMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockMacApp.swift; sourceTree = "<group>"; };
 		ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccelerometerReader.swift; sourceTree = "<group>"; };
 		B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotAction.swift; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */,
+				9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */,
 				0B61FC59407AED88DC86806D /* InputActivityGate.swift */,
 				9308DC0110F85D3166526F13 /* KnockDetector.swift */,
 			);
@@ -235,6 +238,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				83BB6348EFA8E057C3BFC11D /* AccelerometerReader.swift in Sources */,
+				1E2712CE265682F72312837F /* AdaptiveBaseline.swift in Sources */,
 				A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */,
 				C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */,
 				732D57353CBC878907D1F288 /* KnockController.swift in Sources */,
