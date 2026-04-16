@@ -484,11 +484,11 @@ class OnboardingWindowManager {
                 defer: false
             )
             newWindow.title = title
+            // Flush content edge-to-edge while keeping the native rounded window chrome
+            // (so traffic lights remain clickable and the window clips properly).
             newWindow.titlebarAppearsTransparent = true
-            newWindow.titleVisibility = .hidden
             newWindow.isMovableByWindowBackground = true
             newWindow.isReleasedWhenClosed = false
-            newWindow.backgroundColor = .clear
             newWindow.contentViewController = hostingController
             newWindow.level = .floating
             newWindow.center()
