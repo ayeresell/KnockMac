@@ -375,7 +375,7 @@ struct OnboardingView: View {
                 self.knockFlash = true
                 // Position marker: (0.10 - deviation) / 0.08 maps deviation → slider space.
                 // Strong knock (high deviation) → marker left; light knock → marker right.
-                self.knockMarkerPos = min(1.0, max(0.0, (0.10 - deviation) / 0.08))
+                self.knockMarkerPos = min(1.0, max(0.0, (0.10 - deviation) / 0.072))
                 self.knockMarkerOpacity = 1.0
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                     self.knockFlash = false
