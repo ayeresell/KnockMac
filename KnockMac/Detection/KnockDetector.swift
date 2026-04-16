@@ -73,9 +73,9 @@ struct ImpulseAlgorithm: KnockAlgorithm {
     var preQuietThreshold: Double { max(0.025, magnitudeThreshold * 0.8) }
     func analyze(sample: AccelSample, history: [AccelSample], baseline: Double) -> Bool {
         guard history.count >= 8 else { return false }
-        // Oldest 4 samples (~60–100 ms ago at 100 Hz) should be quiet
-        let preSamples = history.prefix(4)
-        let preAvg = preSamples.map(\.magnitude).reduce(0, +) / Double(preSamples.count)
+        // Oldest 4 samples (~60–100 ms ago at 100 Hz) should be quiet.
+        // Inline to avoid array allocation on every sample (called at 100 Hz).
+        let preAvg = (history[0].magnitude + history[1].magnitude + history[2].magnitude + history[3].magnitude) * 0.25
         return abs(preAvg - baseline) < preQuietThreshold
     }
 }
