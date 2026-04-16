@@ -70,7 +70,7 @@ struct OnboardingView: View {
                                 if !hasScreenCapture {
                                     Button("Grant") {
                                         // Lower window so TCC dialog appears above; level restored via onChange(of: hasScreenCapture)
-                                        NSApp.windows.first(where: { $0.title == "KnockMac Setup" })?.level = .normal
+                                        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
                                         CGRequestScreenCaptureAccess()
                                     }
                                     .buttonStyle(.bordered)
