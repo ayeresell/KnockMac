@@ -431,6 +431,10 @@ struct OnboardingView: View {
         let reader = AccelerometerReader()
         let detector = KnockDetector()
         detector.setCalibrationMode(threshold: sliderThreshold)
+        // Shorter than production 1.0s so rapid sequential double-knocks
+        // during verification aren't swallowed by cooldown. Still longer
+        // than maxGap (0.325s) to avoid chassis-resonance re-triggers.
+        detector.cooldown = 0.4
 
         detector.onDoubleKnockWithGap = { _, _ in
             DispatchQueue.main.async {
