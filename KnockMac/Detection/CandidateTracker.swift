@@ -38,6 +38,12 @@ final class CandidateTracker {
             } else {
                 appendPreBuffer(sample)
             }
+        case .draining:
+            // Wait for signal to drop below threshold before accepting a new candidate.
+            if deviation <= threshold {
+                appendPreBuffer(sample)
+                state = .idle
+            }
         case .collecting:
             appendCollected(sample, deviation: deviation)
             let quietCutoff = threshold * quietRatio
