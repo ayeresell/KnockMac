@@ -359,6 +359,7 @@ struct OnboardingView: View {
 
     private func startSensitivityCalibration() {
         stopCalibration()
+        NotificationCenter.default.post(name: NSNotification.Name("OnboardingStarted"), object: nil)
 
         let reader = AccelerometerReader()
         let detector = KnockDetector()
