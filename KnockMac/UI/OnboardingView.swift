@@ -72,14 +72,16 @@ struct OnboardingView: View {
                                 .transition(.opacity)
                             }
                         }
-                        .padding(14)
+                        .padding(16)
                         .frame(width: 420)
-                        .background(Color.secondary.opacity(0.08))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(.regularMaterial)
                         )
-                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        )
 
                         Spacer(minLength: 0)
 
