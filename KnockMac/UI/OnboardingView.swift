@@ -567,49 +567,34 @@ struct SystemCheck: Identifiable, Equatable {
 
 struct SystemCheckRow: View {
     let check: SystemCheck
-    var onGrant: () -> Void = {}
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 10) {
-                Image(systemName: check.icon)
-                    .font(.system(size: 14))
-                    .foregroundColor(iconColor)
-                    .frame(width: 20)
+        HStack(spacing: 10) {
+            Image(systemName: check.icon)
+                .font(.system(size: 14))
+                .foregroundColor(iconColor)
+                .frame(width: 20)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(check.title)
-                        .font(.body)
-                        .foregroundColor(titleColor)
-                    if let detail = check.detail {
-                        Text(detail)
-                            .font(.callout)
-                            .foregroundColor(.secondary)
-                            .transition(.opacity)
-                    } else if check.status == .failed && check.showsGrantOnFailure {
-                        Text("Permission required")
-                            .font(.callout)
-                            .foregroundColor(.orange)
-                    }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(check.title)
+                    .font(.body)
+                    .foregroundColor(titleColor)
+                if let detail = check.detail {
+                    Text(detail)
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                        .transition(.opacity)
+                } else if check.status == .failed && check.showsGrantOnFailure {
+                    Text("Permission required")
+                        .font(.callout)
+                        .foregroundColor(.orange)
                 }
-
-                Spacer()
-
-                statusIndicator
-                    .frame(width: 18, height: 18)
             }
 
-            if check.status == .failed && check.showsGrantOnFailure {
-                HStack {
-                    Spacer()
-                    Button("Open System Settings") { onGrant() }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.regular)
-                        .buttonBorderShape(.capsule)
-                    Spacer()
-                }
-                .transition(.opacity)
-            }
+            Spacer()
+
+            statusIndicator
+                .frame(width: 18, height: 18)
         }
         .padding(.vertical, 2)
         .opacity(check.status == .pending ? 0.4 : 1.0)
