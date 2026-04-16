@@ -576,16 +576,17 @@ struct SystemCheckRow: View {
                 Text(check.title)
                     .font(.body)
                     .foregroundColor(titleColor)
-                if let detail = check.detail {
-                    Text(detail)
-                        .font(.callout)
-                        .foregroundColor(.secondary)
-                        .transition(.opacity)
-                } else if check.status == .failed && check.showsGrantOnFailure {
-                    Text("Permission required")
-                        .font(.callout)
-                        .foregroundColor(.orange)
+                Group {
+                    if let detail = check.detail {
+                        Text(detail).foregroundColor(.secondary)
+                    } else if check.status == .failed && check.showsGrantOnFailure {
+                        Text("Permission required").foregroundColor(.orange)
+                    } else {
+                        Text(" ").foregroundColor(.clear)
+                    }
                 }
+                .font(.callout)
+                .transition(.opacity)
             }
 
             Spacer()
