@@ -235,11 +235,13 @@ final class KnockDetector {
     }
 
     private func updateBaseline(_ magnitude: Double) {
-        baselineBuffer.append(magnitude)
-        if baselineBuffer.count > baselineWindowSize {
-            baselineBuffer.removeFirst()
+        // Skip during knock to avoid polluting the baseline with impulse samples.
+        guard !inKnock && pendingCallback == nil else { return }
+        if baselineBuffer.count >= baselineWindowSize {
+            baselineSum -= baselineBuffer.removeFirst()
         }
-        let sorted = baselineBuffer.sorted()
-        baseline = sorted[sorted.count / 2]
+        baselineBuffer.append(magnitude)
+        baselineSum += magnitude
+        baseline = baselineSum / Double(baselineBuffer.count)
     }
 }
