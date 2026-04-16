@@ -235,6 +235,7 @@ struct OnboardingView: View {
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.large)
+                            .buttonBorderShape(.capsule)
 
                             Spacer()
 
@@ -243,10 +244,13 @@ struct OnboardingView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
+                            .buttonBorderShape(.capsule)
                             .disabled(verifyKnockCount < 3)
                         }
                     }
-                    .padding(40)
+                    .padding(.top, 30)
+                    .padding(.horizontal, 30)
+                    .padding(.bottom, 30)
                     .transition(.opacity)
                 }
             }
