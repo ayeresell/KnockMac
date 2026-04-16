@@ -316,7 +316,7 @@ struct OnboardingView: View {
         // before this window closes. Without the delay the app briefly has no active
         // scenes and applicationShouldTerminate may fire before the icon is registered.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            NSApp.windows.first(where: { $0.title == "KnockMac Setup" })?.close()
+            OnboardingWindowManager.shared.closeWindow()
         }
     }
 }
