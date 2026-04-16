@@ -21,7 +21,7 @@ final class KnockController: ObservableObject {
             guard let self, self.isActive else { return }
             guard UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") else { return }
             self.knockDetector.feed(sample)
-            self.sensorAvailable = true
+            if !self.sensorAvailable { self.sensorAvailable = true }
         }
 
         NotificationCenter.default.publisher(for: NSNotification.Name("OnboardingCompleted"))
