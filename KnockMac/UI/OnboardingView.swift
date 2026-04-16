@@ -306,13 +306,7 @@ struct OnboardingView: View {
     
     private func finishOnboarding() {
         stopCalibration()
-        
-        // Save with 25% headroom so natural force variation still registers.
-        // Clamped: 0.028g (floor) … 0.10g (ceiling).
-        let finalThreshold = min(0.10, max(0.028, sliderThreshold * 0.75))
-        UserDefaults.standard.set(finalThreshold, forKey: "knockThreshold")
-        print("[Onboarding] Final calibrated threshold to \(finalThreshold) (slider was \(sliderThreshold))")
-        
+
         hasCompletedOnboarding = true
 
         // Notify the KnockController to reload settings and start listening
