@@ -164,7 +164,7 @@ struct OnboardingView: View {
                     .padding(40)
                     .transition(.opacity)
                 } else if step == 2 {
-                    // Step 3: Verify
+                    // Step 2: Verify
                     VStack(spacing: 20) {
                         Text("Step 2: Test it out")
                             .font(.title)
