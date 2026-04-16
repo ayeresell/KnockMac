@@ -246,16 +246,7 @@ struct OnboardingView: View {
             }
         }
         .frame(width: 500, height: 480)
-        .background(
-            ZStack {
-                // Window-level material gives the translucent "liquid glass" backdrop.
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(.thickMaterial)
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(.thickMaterial)
         .onAppear {
             if startAtStep > 0 {
                 step = startAtStep
