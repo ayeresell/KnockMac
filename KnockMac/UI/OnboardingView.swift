@@ -503,19 +503,26 @@ class OnboardingWindowManager {
         if window == nil {
             let hostingController = NSHostingController(rootView: OnboardingView(startAtStep: startAtStep))
             let newWindow = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 500, height: 480),
+                contentRect: NSRect(x: 0, y: 0, width: 520, height: 620),
                 styleMask: [.titled, .closable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
             newWindow.title = title
-            // Flush content edge-to-edge while keeping the native rounded window chrome
-            // (so traffic lights remain clickable and the window clips properly).
             newWindow.titlebarAppearsTransparent = true
             newWindow.isMovableByWindowBackground = true
             newWindow.isReleasedWhenClosed = false
             newWindow.contentViewController = hostingController
             newWindow.level = .floating
+
+            // Heavier rounding on the window itself to match the Liquid Glass aesthetic.
+            newWindow.contentView?.wantsLayer = true
+            newWindow.contentView?.layer?.cornerRadius = 20
+            newWindow.contentView?.layer?.masksToBounds = true
+            newWindow.backgroundColor = .clear
+            newWindow.isOpaque = false
+            newWindow.hasShadow = true
+
             newWindow.center()
             self.window = newWindow
         } else {
