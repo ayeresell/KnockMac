@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4874DF685AC9CF1669C8CD20 /* Placeholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1108EC81C76695F005910E /* Placeholder.swift */; };
 		732D57353CBC878907D1F288 /* KnockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14150E502C3560D21F6F8FD9 /* KnockController.swift */; };
 		83BB6348EFA8E057C3BFC11D /* AccelerometerReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */; };
 		88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */; };
@@ -19,11 +20,22 @@
 		FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9308DC0110F85D3166526F13 /* KnockDetector.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		106C8DD8A0A500C88BBFDB59 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 37D0E455C11041769FEDE0AA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1899B7464AE510E4940DD658;
+			remoteInfo = KnockMac;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		14150E502C3560D21F6F8FD9 /* KnockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockController.swift; sourceTree = "<group>"; };
 		335D88182787E06CBE84A200 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
 		6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		7098DD185D0005BCD5781516 /* KnockMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KnockMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		72F28255E26A4FEA48DF3AE6 /* KnockMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KnockMac.entitlements; sourceTree = "<group>"; };
 		9308DC0110F85D3166526F13 /* KnockDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockDetector.swift; sourceTree = "<group>"; };
 		AA68A86045964D1FF5438353 /* KnockMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockMacApp.swift; sourceTree = "<group>"; };
@@ -32,6 +44,7 @@
 		CFA5E01B737331DCF00B3989 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = IOKit.framework; sourceTree = "<group>"; };
 		D225D3074FA34935A37734CF /* KnockMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KnockMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
+		EF1108EC81C76695F005910E /* Placeholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Placeholder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				A09FD0D21B60D360A73718EE /* KnockMac */,
+				C59ADC22C6239FE837B50C45 /* KnockMacTests */,
 				B474D70991F7E37407FAC6FF /* Frameworks */,
 				E84EA6D65D0DDB212B41D381 /* Products */,
 			);
@@ -105,10 +119,19 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		C59ADC22C6239FE837B50C45 /* KnockMacTests */ = {
+			isa = PBXGroup;
+			children = (
+				EF1108EC81C76695F005910E /* Placeholder.swift */,
+			);
+			path = KnockMacTests;
+			sourceTree = "<group>";
+		};
 		E84EA6D65D0DDB212B41D381 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				D225D3074FA34935A37734CF /* KnockMac.app */,
+				7098DD185D0005BCD5781516 /* KnockMacTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -134,6 +157,24 @@
 			productReference = D225D3074FA34935A37734CF /* KnockMac.app */;
 			productType = "com.apple.product-type.application";
 		};
+		FC37C5F8272C2C9031DC14DB /* KnockMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9338897B417A17DB7AD19E57 /* Build configuration list for PBXNativeTarget "KnockMacTests" */;
+			buildPhases = (
+				417796046392D611F9493F6B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				544253F23658264D453AC7EA /* PBXTargetDependency */,
+			);
+			name = KnockMacTests;
+			packageProductDependencies = (
+			);
+			productName = KnockMacTests;
+			productReference = 7098DD185D0005BCD5781516 /* KnockMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -144,6 +185,10 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					1899B7464AE510E4940DD658 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					FC37C5F8272C2C9031DC14DB = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
@@ -164,11 +209,20 @@
 			projectRoot = "";
 			targets = (
 				1899B7464AE510E4940DD658 /* KnockMac */,
+				FC37C5F8272C2C9031DC14DB /* KnockMacTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		417796046392D611F9493F6B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4874DF685AC9CF1669C8CD20 /* Placeholder.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		4E3EAB7B610900189BCF8041 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -185,6 +239,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		544253F23658264D453AC7EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1899B7464AE510E4940DD658 /* KnockMac */;
+			targetProxy = 106C8DD8A0A500C88BBFDB59 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		5D7A97E1DAB8F44E24002B69 /* Debug */ = {
@@ -249,6 +311,23 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		6CC88503B38622C1D2E400C8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.knockmac.tests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KnockMac.app/Contents/MacOS/KnockMac";
 			};
 			name = Debug;
 		};
@@ -352,6 +431,23 @@
 			};
 			name = Release;
 		};
+		F195F7C49D4280CA91D3AF93 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.knockmac.tests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KnockMac.app/Contents/MacOS/KnockMac";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -360,6 +456,15 @@
 			buildConfigurations = (
 				7506BB4652E1FDF2A6814CBD /* Debug */,
 				74FDEDF1E55AB7C533D3894D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9338897B417A17DB7AD19E57 /* Build configuration list for PBXNativeTarget "KnockMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6CC88503B38622C1D2E400C8 /* Debug */,
+				F195F7C49D4280CA91D3AF93 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
