@@ -13,14 +13,7 @@ struct OnboardingView: View {
     @State private var hasAccelerometer = false
     @State private var sysCheckReader: AccelerometerReader?
     
-    // Step 2 (Sensitivity) state
-    // 0 = least sensitive (threshold 0.10g), 1 = most sensitive (threshold 0.02g)
-    @State private var sensitivitySlider: Double = 0.5
-    @State private var knockFlash: Bool = false
-    @State private var knockMarkerPos: Double = 0
-    @State private var knockMarkerOpacity: Double = 0
-    
-    // Step 3 (Verify) state
+    // Step 2 (Verify) state
     @State private var verifyKnockCount: Int = 0
     
     // Local knock detector just for calibration
