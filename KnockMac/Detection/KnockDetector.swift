@@ -122,7 +122,7 @@ final class KnockDetector {
 
     private func findImpulseStart(_ w: CandidateTracker.ImpulseWindow) -> Int {
         for (i, s) in w.samples.enumerated() {
-            if abs(s.magnitude - w.baseline) > 0.020 {
+            if abs(s.magnitude - w.baseline) > 0.010 {
                 return i
             }
         }
