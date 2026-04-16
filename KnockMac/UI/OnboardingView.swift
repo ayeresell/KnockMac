@@ -524,27 +524,45 @@ struct SystemCheckRow: View {
     var onGrant: () -> Void = {}
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: check.icon)
-                .font(.system(size: 14))
-                .foregroundColor(iconColor)
-                .frame(width: 20)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Image(systemName: check.icon)
+                    .font(.system(size: 14))
+                    .foregroundColor(iconColor)
+                    .frame(width: 20)
 
-            VStack(alignment: .leading, spacing: 1) {
-                Text(check.title)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(titleColor)
-                if let detail = check.detail {
-                    Text(detail)
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.secondary)
-                        .transition(.opacity)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(check.title)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(titleColor)
+                    if let detail = check.detail {
+                        Text(detail)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(.secondary)
+                            .transition(.opacity)
+                    } else if check.status == .failed && check.showsGrantOnFailure {
+                        Text("Permission required")
+                            .font(.system(size: 11))
+                            .foregroundColor(.orange)
+                    }
                 }
+
+                Spacer()
+
+                statusIndicator
+                    .frame(width: 18, height: 18)
             }
 
-            Spacer()
-
-            statusIndicator
+            if check.status == .failed && check.showsGrantOnFailure {
+                HStack {
+                    Spacer().frame(width: 30)
+                    Button("Open System Settings") { onGrant() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    Spacer()
+                }
+                .transition(.opacity)
+            }
         }
         .padding(.vertical, 2)
         .opacity(check.status == .pending ? 0.4 : 1.0)
@@ -560,23 +578,16 @@ struct SystemCheckRow: View {
         case .scanning:
             ProgressView()
                 .scaleEffect(0.5)
-                .frame(width: 18, height: 18)
         case .passed:
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 14))
                 .foregroundColor(.green)
                 .transition(.scale.combined(with: .opacity))
         case .failed:
-            HStack(spacing: 6) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(.orange)
-                if check.showsGrantOnFailure {
-                    Button("Grant") { onGrant() }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                }
-            }
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14))
+                .foregroundColor(.orange)
+                .transition(.scale.combined(with: .opacity))
         }
     }
 
