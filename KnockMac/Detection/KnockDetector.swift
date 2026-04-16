@@ -24,7 +24,7 @@ final class KnockDetector {
     init() {
         // Lowered k and absoluteFloor from defaults so lighter knocks register.
         // Relaxed attack window and Z-dominance so real-world impulses pass.
-        self.gate = InputActivityGate()
+        self.gate = InputActivityGate(suppressionWindow: 0.5)
         self.baseline = AdaptiveBaseline(
             windowSize: 200,
             k: 5.0,
