@@ -12,7 +12,14 @@ struct OnboardingView: View {
     @State private var hasScreenCapture = false
     @State private var hasAccelerometer = false
     @State private var sysCheckReader: AccelerometerReader?
-    
+
+    // Animated system check
+    @State private var checks: [SystemCheck] = SystemCheck.initial()
+    @State private var statusLine: String = "Initializing diagnostics…"
+    @State private var scanProgress: Double = 0
+    @State private var iconPulse: Bool = false
+    @State private var checksStarted: Bool = false
+
     // Step 2 (Verify) state
     @State private var verifyKnockCount: Int = 0
     
