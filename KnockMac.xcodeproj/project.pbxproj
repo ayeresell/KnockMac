@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1E2712CE265682F72312837F /* AdaptiveBaseline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */; };
+		1F13AF9B9C2DE8C48285CA04 /* CandidateTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C986281E97DD910952B446A /* CandidateTracker.swift */; };
 		4874DF685AC9CF1669C8CD20 /* Placeholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1108EC81C76695F005910E /* Placeholder.swift */; };
 		5586FCF39C9075C4C7CFE06F /* AdaptiveBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8420B36C4D8F68DC4609BC6 /* AdaptiveBaselineTests.swift */; };
 		732D57353CBC878907D1F288 /* KnockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14150E502C3560D21F6F8FD9 /* KnockController.swift */; };
@@ -40,6 +41,7 @@
 		2947F5853CBD4C713F2BAA33 /* CandidateTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTrackerTests.swift; sourceTree = "<group>"; };
 		335D88182787E06CBE84A200 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
+		4C986281E97DD910952B446A /* CandidateTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTracker.swift; sourceTree = "<group>"; };
 		6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		7098DD185D0005BCD5781516 /* KnockMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KnockMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		72F28255E26A4FEA48DF3AE6 /* KnockMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KnockMac.entitlements; sourceTree = "<group>"; };
@@ -73,6 +75,7 @@
 			children = (
 				ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */,
 				9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */,
+				4C986281E97DD910952B446A /* CandidateTracker.swift */,
 				0B61FC59407AED88DC86806D /* InputActivityGate.swift */,
 				9308DC0110F85D3166526F13 /* KnockDetector.swift */,
 			);
@@ -244,6 +247,7 @@
 				83BB6348EFA8E057C3BFC11D /* AccelerometerReader.swift in Sources */,
 				1E2712CE265682F72312837F /* AdaptiveBaseline.swift in Sources */,
 				A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */,
+				1F13AF9B9C2DE8C48285CA04 /* CandidateTracker.swift in Sources */,
 				C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */,
 				732D57353CBC878907D1F288 /* KnockController.swift in Sources */,
 				FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */,
