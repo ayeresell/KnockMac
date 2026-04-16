@@ -218,8 +218,7 @@ struct OnboardingView: View {
                         HStack {
                             Button("Back") {
                                 verifyKnockCount = 0
-                                withAnimation { step = 2 }
-                                startSensitivityCalibration()
+                                withAnimation { step = 1 }
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.large)
