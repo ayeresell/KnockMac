@@ -60,39 +60,42 @@ struct OnboardingView: View {
 
                         VStack(spacing: 10) {
                             ForEach(checks.indices, id: \.self) { idx in
-                                SystemCheckRow(check: checks[idx]) {
-                                    NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-                                    // Register the app with TCC so it appears in the Screen Recording list.
-                                    // First call shows a one-time system dialog; subsequent calls are silent.
-                                    _ = CGRequestScreenCaptureAccess()
-                                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                                        NSWorkspace.shared.open(url)
-                                    }
-                                }
-                                .transition(.opacity)
+                                SystemCheckRow(check: checks[idx])
+                                    .transition(.opacity)
                             }
                         }
                         .padding(16)
                         .frame(width: 420)
                         .background(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
                                 .fill(.regularMaterial)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
                                 .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
                         )
 
-                        Spacer(minLength: 12)
+                        Spacer(minLength: 16)
 
-                        if allChecksPassed {
-                            Button("Continue") {
-                                withAnimation { step = 1 }
+                        // Action button below card (stays in flow, not pinned to bottom)
+                        Group {
+                            if allChecksPassed {
+                                Button("Continue") {
+                                    withAnimation { step = 1 }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.large)
+                                .buttonBorderShape(.capsule)
+                                .transition(.opacity.combined(with: .scale))
+                            } else if hasPermissionFailure {
+                                Button("Open System Settings") {
+                                    requestScreenRecordingAccess()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.large)
+                                .buttonBorderShape(.capsule)
+                                .transition(.opacity.combined(with: .scale))
                             }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
-                            .buttonBorderShape(.capsule)
-                            .transition(.opacity.combined(with: .scale))
                         }
                     }
                     .padding(.top, 30)
