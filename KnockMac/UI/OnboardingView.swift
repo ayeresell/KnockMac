@@ -83,7 +83,7 @@ struct OnboardingView: View {
                                 .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
                         )
 
-                        Spacer(minLength: 0)
+                        Spacer(minLength: 12)
 
                         if allChecksPassed {
                             Button("Continue") {
@@ -91,10 +91,13 @@ struct OnboardingView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
+                            .buttonBorderShape(.capsule)
                             .transition(.opacity.combined(with: .scale))
                         }
                     }
-                    .padding(30)
+                    .padding(.top, 30)
+                    .padding(.horizontal, 30)
+                    .padding(.bottom, 30)
                     .transition(.opacity)
                     .onAppear {
                         iconPulse = true
