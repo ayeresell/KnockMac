@@ -538,16 +538,16 @@ struct SystemCheckRow: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(check.title)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.body)
                         .foregroundColor(titleColor)
                     if let detail = check.detail {
                         Text(detail)
-                            .font(.system(size: 11, design: .monospaced))
+                            .font(.callout)
                             .foregroundColor(.secondary)
                             .transition(.opacity)
                     } else if check.status == .failed && check.showsGrantOnFailure {
                         Text("Permission required")
-                            .font(.system(size: 11))
+                            .font(.callout)
                             .foregroundColor(.orange)
                     }
                 }
