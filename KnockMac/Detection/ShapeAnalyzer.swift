@@ -11,17 +11,20 @@ final class ShapeAnalyzer {
     let decayFraction: Double
     let minZDominance: Double
     let maxPreQuietDeviation: Double
+    let minPeakDeviation: Double
 
     init(maxAttackSamples: Int = 4,
          minDecaySamples: Int = 2,
          decayFraction: Double = 0.5,
          minZDominance: Double = 1.3,
-         maxPreQuietDeviation: Double = 0.025) {
+         maxPreQuietDeviation: Double = 0.025,
+         minPeakDeviation: Double = 0.0) {
         self.maxAttackSamples = maxAttackSamples
         self.minDecaySamples = minDecaySamples
         self.decayFraction = decayFraction
         self.minZDominance = minZDominance
         self.maxPreQuietDeviation = maxPreQuietDeviation
+        self.minPeakDeviation = minPeakDeviation
     }
 
     func classify(_ w: CandidateTracker.ImpulseWindow) -> Classification {
