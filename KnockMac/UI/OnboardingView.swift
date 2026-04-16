@@ -267,6 +267,105 @@ struct OnboardingView: View {
             }
         }
     }
+
+    private var allChecksFinished: Bool {
+        checks.allSatisfy { $0.status != .pending && $0.status != .scanning }
+    }
+    private var allChecksPassed: Bool {
+        checks.allSatisfy { $0.status == .passed }
+    }
+
+    private func updateCheck(id: String, granted: Bool) {
+        guard let idx = checks.firstIndex(where: { $0.id == id }) else { return }
+        // Only resolve if we're past this check in the sequence.
+        guard checks[idx].status == .scanning || checks[idx].status == .failed else { return }
+        withAnimation(.easeOut(duration: 0.25)) {
+            checks[idx].status = granted ? .passed : .failed
+            if id == "sensor" && granted {
+                checks[idx].detail = "Apple Silicon IMU · 100 Hz"
+            }
+        }
+        advanceStatusLineIfDone()
+    }
+
+    private func advanceStatusLineIfDone() {
+        if allChecksPassed {
+            statusLine = "All systems nominal"
+        } else if allChecksFinished {
+            statusLine = "Attention required"
+        }
+    }
+
+    private func runAnimatedDiagnostic() {
+        // Stage 1: macOS
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            statusLine = "Detecting operating system…"
+            setChecking(id: "macos")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            resolve(id: "macos", detail: SystemInfo.osDescription())
+        }
+
+        // Stage 2: Chip
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.70) {
+            statusLine = "Identifying Apple silicon…"
+            setChecking(id: "chip")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.10) {
+            resolve(id: "chip", detail: SystemInfo.chipDescription())
+        }
+
+        // Stage 3: Memory
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
+            statusLine = "Measuring unified memory…"
+            setChecking(id: "memory")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.60) {
+            resolve(id: "memory", detail: SystemInfo.memoryDescription())
+        }
+
+        // Stage 4: Motion sensor (waits on real HID detection)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.75) {
+            statusLine = "Probing motion sensor at vendor 0x05AC…"
+            setChecking(id: "sensor")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.20) {
+            statusLine = "Reading IMU sample stream…"
+        }
+        // Sensor check resolves via onChange(hasAccelerometer) — above callback handles it.
+        // Fallback: if still not resolved after 4s, mark failed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            if let idx = checks.firstIndex(where: { $0.id == "sensor" }),
+               checks[idx].status == .scanning {
+                updateCheck(id: "sensor", granted: false)
+                checks[idx].detail = "Sensor not found"
+            }
+        }
+
+        // Stage 5: Screen recording permission
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.60) {
+            statusLine = "Verifying capture permissions…"
+            setChecking(id: "permission")
+            // Resolve immediately based on current state.
+            refreshScreenCaptureAccess()
+            updateCheck(id: "permission", granted: hasScreenCapture)
+        }
+    }
+
+    private func setChecking(id: String) {
+        guard let idx = checks.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            checks[idx].status = .scanning
+        }
+    }
+
+    private func resolve(id: String, detail: String) {
+        guard let idx = checks.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation(.easeOut(duration: 0.25)) {
+            checks[idx].detail = detail
+            checks[idx].status = .passed
+        }
+    }
     
     private func startVerificationCalibration() {
         stopCalibration()
