@@ -170,8 +170,11 @@ struct OnboardingView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
+                        .buttonBorderShape(.capsule)
                     }
-                    .padding(40)
+                    .padding(.top, 30)
+                    .padding(.horizontal, 30)
+                    .padding(.bottom, 30)
                     .transition(.opacity)
                 } else if step == 2 {
                     // Step 2: Verify
