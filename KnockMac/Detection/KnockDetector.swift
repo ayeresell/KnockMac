@@ -100,15 +100,15 @@ final class KnockDetector {
         let dev = abs(sample.magnitude - baseline.baseline)
         let threshold = baseline.thresholdDeviation
 
-        // Periodic status log every 2s so user can watch baseline/threshold drift.
-        if now - lastStatusLog > 2.0 {
+        // Periodic status log every 5s so user can watch baseline/threshold drift
+        // without drowning in output.
+        if now - lastStatusLog > 5.0 {
             lastStatusLog = now
-            print("[Detector] status: baseline=\(String(format: "%.3f", baseline.baseline))g σ=\(String(format: "%.4f", baseline.sigma)) threshold=\(String(format: "%.3f", threshold))g gateSuppressed=\(gateSuppressCount)")
+            print("[Detector] status: baseline=\(String(format: "%.3f", baseline.baseline))g σ=\(String(format: "%.4f", baseline.sigma)) threshold=\(String(format: "%.3f", threshold))g gateSuppressed=\(gateSuppressCount)/5s")
             gateSuppressCount = 0
         }
 
         if dev > threshold {
-            print("[Detector] dev=\(String(format: "%.3f", dev))g > threshold=\(String(format: "%.3f", threshold))g → candidate")
             baseline.freeze()
         }
         tracker.feed(sample, deviation: dev, threshold: threshold, baseline: baseline.baseline)
