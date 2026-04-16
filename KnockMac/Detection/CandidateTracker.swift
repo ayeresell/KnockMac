@@ -10,7 +10,7 @@ final class CandidateTracker {
     var onImpulse: ((ImpulseWindow) -> Void)?
 
     private let maxCollectSamples: Int = 30
-    private let quietRatio: Double = 0.3
+    private let quietRatio: Double = 0.7
     private let quietRunToEnd: Int = 5
     private let preBufferSize: Int = 10
 
