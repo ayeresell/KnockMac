@@ -13,6 +13,7 @@
 		88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */; };
 		A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */; };
 		B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */; };
+		C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B61FC59407AED88DC86806D /* InputActivityGate.swift */; };
 		D1F595BB74719F42B2C953BF /* ScreenCaptureKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */; };
 		E087FD2C6A2E4C15D244BDC6 /* KnockMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA68A86045964D1FF5438353 /* KnockMacApp.swift */; };
 		F24F830E7EBC6A6395BAE7F3 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335D88182787E06CBE84A200 /* OnboardingView.swift */; };
@@ -31,6 +32,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0B61FC59407AED88DC86806D /* InputActivityGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputActivityGate.swift; sourceTree = "<group>"; };
 		14150E502C3560D21F6F8FD9 /* KnockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockController.swift; sourceTree = "<group>"; };
 		335D88182787E06CBE84A200 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
@@ -64,6 +66,7 @@
 			isa = PBXGroup;
 			children = (
 				ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */,
+				0B61FC59407AED88DC86806D /* InputActivityGate.swift */,
 				9308DC0110F85D3166526F13 /* KnockDetector.swift */,
 			);
 			path = Detection;
@@ -229,6 +232,7 @@
 			files = (
 				83BB6348EFA8E057C3BFC11D /* AccelerometerReader.swift in Sources */,
 				A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */,
+				C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */,
 				732D57353CBC878907D1F288 /* KnockController.swift in Sources */,
 				FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */,
 				E087FD2C6A2E4C15D244BDC6 /* KnockMacApp.swift in Sources */,
