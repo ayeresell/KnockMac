@@ -258,7 +258,7 @@ struct OnboardingView: View {
                 }
             }
         }
-        .frame(width: 500, height: 480)
+        .frame(width: 520, height: 620)
         .background(.thickMaterial)
         .onAppear {
             if startAtStep > 0 {
