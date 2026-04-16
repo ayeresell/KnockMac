@@ -37,13 +37,13 @@ final class KnockDetector {
             maxAttackSamples: 6,
             minDecaySamples: 2,
             decayFraction: 0.5,
-            minZDominance: 1.1,
-            maxPreQuietDeviation: 0.020
+            minZDominance: 0.8,
+            maxPreQuietDeviation: 0.010
         )
-        self.matcher = DoubleKnockMatcher(minGap: 0.08, maxGap: 0.5)
+        self.matcher = DoubleKnockMatcher(minGap: 0.08, maxGap: 0.5, maxAmpRatio: 4.0)
 
         wire()
-        print("[Detector] v2 initialized — k=4.0 absFloor=0.015 attack≤6 zDom≥1.1 gap=[0.08,0.5]s")
+        print("[Detector] v2 initialized — k=4.0 absFloor=0.015 attack≤6 zDom≥0.8 ampRatio≤4.0 gap=[0.08,0.5]s quietRatio=0.7")
     }
 
     private func wire() {
