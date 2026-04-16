@@ -23,6 +23,15 @@ final class KnockController: ObservableObject {
             if !self.sensorAvailable { self.sensorAvailable = true }
         }
 
+        // Pause main reader when calibration starts to prevent double-processing.
+        // During recalibration isActive is still true, but calibrationReader steals the
+        // HID callback — both would fire simultaneously without this guard.
+        NotificationCenter.default.publisher(for: NSNotification.Name("OnboardingStarted"))
+            .sink { [weak self] _ in
+                self?.isActive = false
+            }
+            .store(in: &cancellables)
+
         NotificationCenter.default.publisher(for: NSNotification.Name("OnboardingCompleted"))
             .sink { [weak self] _ in
                 self?.knockDetector.reloadSettings()
