@@ -228,14 +228,16 @@ final class KnockDetector {
     private func firePendingCallback() {
         guard let pending = pendingCallback else { return }
         pendingCallback = nil
-        let peak = pendingPeakDeviation
+        let settledPeak = pendingPeakDeviation
         switch pending {
         case .single:
-            print("[KnockDetector] 1st knock settled dev=\(String(format:"%.3f", peak))g")
-            onSingleKnock?(peak)
+            print("[KnockDetector] 1st knock settled dev=\(String(format:"%.3f", settledPeak))g initial=\(String(format:"%.3f", initialPeakDeviation))g")
+            // Pass initial peak (pre-resonance) so calibration marker reflects
+            // the primary impulse, not resonance oscillations that inflate the value.
+            onSingleKnock?(initialPeakDeviation)
         case .double(let gap):
-            print("[KnockDetector] ✅ DOUBLE KNOCK settled gap=\(String(format:"%.3f", gap))s dev=\(String(format:"%.3f", peak))g")
-            onDoubleKnockWithGap?(gap, peak)
+            print("[KnockDetector] ✅ DOUBLE KNOCK settled gap=\(String(format:"%.3f", gap))s dev=\(String(format:"%.3f", settledPeak))g")
+            onDoubleKnockWithGap?(gap, settledPeak)
             onKnock?()
         }
     }
