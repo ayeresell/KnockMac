@@ -1,9 +1,10 @@
 import SwiftUI
 import Combine
+import CoreGraphics
 
 @MainActor
 final class KnockController: ObservableObject {
-    @Published var isActive = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+    @Published var isActive: Bool
     @Published var lastKnockTime: Date?
     @Published var sensorAvailable = false
 
@@ -12,7 +13,15 @@ final class KnockController: ObservableObject {
     private let audioPlayer = AudioPlayer()
     private var cancellables = Set<AnyCancellable>()
 
+    static func hasRequiredPermissions() -> Bool {
+        let onboarded = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        let hasScreenCapture = CGPreflightScreenCaptureAccess()
+        return onboarded && hasScreenCapture
+    }
+
     init() {
+        self.isActive = KnockController.hasRequiredPermissions()
+
         knockDetector.onKnock = { [weak self] in
             self?.handleKnock()
         }
