@@ -95,10 +95,11 @@ struct OnboardingView: View {
                                 .transition(.opacity.combined(with: .scale))
                             }
                         }
+                        .padding(.top, 4)
                     }
                     .padding(.top, 26)
                     .padding(.horizontal, 30)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 20)
                     .transition(.opacity)
                     .onAppear {
                         iconPulse = true
