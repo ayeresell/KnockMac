@@ -14,8 +14,15 @@ struct AccelSample {
     let x: Double
     let y: Double
     let z: Double
+    // Pre-computed once on creation — magnitude is accessed by every detection algorithm.
+    let magnitude: Double
 
-    var magnitude: Double { (x*x + y*y + z*z).squareRoot() }
+    init(x: Double, y: Double, z: Double) {
+        self.x = x
+        self.y = y
+        self.z = z
+        self.magnitude = (x*x + y*y + z*z).squareRoot()
+    }
 }
 
 @MainActor
