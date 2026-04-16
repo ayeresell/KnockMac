@@ -75,9 +75,7 @@ struct OnboardingView: View {
                                 .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
                         )
 
-                        Spacer(minLength: 16)
-
-                        // Action button below card (stays in flow, not pinned to bottom)
+                        // Action button immediately below card (no flexible spacer)
                         Group {
                             if allChecksPassed {
                                 Button("Continue") {
@@ -97,10 +95,11 @@ struct OnboardingView: View {
                                 .transition(.opacity.combined(with: .scale))
                             }
                         }
+                        .padding(.top, 8)
                     }
-                    .padding(.top, 30)
+                    .padding(.top, 26)
                     .padding(.horizontal, 30)
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 26)
                     .transition(.opacity)
                     .onAppear {
                         iconPulse = true
