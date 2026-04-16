@@ -19,7 +19,6 @@ final class KnockController: ObservableObject {
 
         accelReader.onSample = { [weak self] sample in
             guard let self, self.isActive else { return }
-            guard UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") else { return }
             self.knockDetector.feed(sample)
             if !self.sensorAvailable { self.sensorAvailable = true }
         }
