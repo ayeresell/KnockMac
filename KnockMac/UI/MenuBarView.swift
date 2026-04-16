@@ -12,14 +12,6 @@ struct MenuBarView: View {
 
             Divider()
 
-            Button("Recalibrate…") {
-                OnboardingWindowManager.shared.resetAndShow()
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-
-            Divider()
-
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
