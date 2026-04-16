@@ -337,7 +337,7 @@ class OnboardingWindowManager {
         window?.close()
         window = nil
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
-        show(title: "KnockMac Settings", startAtStep: 1)
+        show(title: "KnockMac Settings", startAtStep: 0)
     }
 
     func closeWindow() {
