@@ -107,7 +107,7 @@ struct OnboardingView: View {
                     }
                     .onChange(of: hasScreenCapture) { _, granted in
                         if granted {
-                            NSApp.windows.first(where: { $0.title == "KnockMac Setup" })?.level = .floating
+                            NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .floating
                         }
                     }
                 } else if step == 1 {
