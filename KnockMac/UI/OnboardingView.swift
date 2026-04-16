@@ -332,17 +332,17 @@ struct OnboardingView: View {
         }
     }
     
-    // Maps slider 0…1 → threshold 0.10g…0.02g
+    // Maps slider 0…1 → threshold 0.10g…0.028g
     private var sliderThreshold: Double {
-        0.10 - sensitivitySlider * 0.08
+        0.10 - sensitivitySlider * 0.072
     }
 
     private var sensitivityLabel: String {
         let t = sliderThreshold
         switch t {
-        case ..<0.03: return "Very sensitive — light touch"
-        case ..<0.05: return "Sensitive — gentle knock"
-        case ..<0.07: return "Medium — normal knock"
+        case ..<0.04: return "Very sensitive — light touch"
+        case ..<0.06: return "Sensitive — gentle knock"
+        case ..<0.08: return "Medium — normal knock"
         default:       return "Firm knock required"
         }
     }
@@ -350,9 +350,9 @@ struct OnboardingView: View {
     private var sensitivityLabelColor: Color {
         let t = sliderThreshold
         switch t {
-        case ..<0.03: return .blue
-        case ..<0.05: return .green
-        case ..<0.07: return .orange
+        case ..<0.04: return .blue
+        case ..<0.06: return .green
+        case ..<0.08: return .orange
         default:       return .red
         }
     }
