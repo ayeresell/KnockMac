@@ -49,7 +49,7 @@ final class CandidateTracker {
             let hardCap = collected.count >= maxCollectSamples
             if quietRun >= quietRunToEnd || hardCap {
                 emit(clearPreBuffer: hardCap)
-                state = .idle
+                state = hardCap ? .draining : .idle
             }
         }
     }
