@@ -98,7 +98,7 @@ final class KnockDetector {
 
     private let minGap: TimeInterval = 0.175
     private let maxGap: TimeInterval = 0.325
-    private let cooldown: TimeInterval = 1.0
+    var cooldown: TimeInterval = 1.0
 
     private var inKnock = false
     private var knockEnterTime: TimeInterval = 0
