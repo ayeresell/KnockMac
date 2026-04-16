@@ -38,3 +38,15 @@ targets:
         embed: false
       - framework: ScreenCaptureKit.framework
         embed: false
+
+  KnockMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: KnockMacTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.knockmac.tests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: KnockMac

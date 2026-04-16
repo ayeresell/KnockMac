@@ -13,14 +13,7 @@ struct OnboardingView: View {
     @State private var hasAccelerometer = false
     @State private var sysCheckReader: AccelerometerReader?
     
-    // Step 2 (Sensitivity) state
-    // 0 = least sensitive (threshold 0.10g), 1 = most sensitive (threshold 0.02g)
-    @State private var sensitivitySlider: Double = 0.5
-    @State private var knockFlash: Bool = false
-    @State private var knockMarkerPos: Double = 0
-    @State private var knockMarkerOpacity: Double = 0
-    
-    // Step 3 (Verify) state
+    // Step 2 (Verify) state
     @State private var verifyKnockCount: Int = 0
     
     // Local knock detector just for calibration
@@ -163,89 +156,6 @@ struct OnboardingView: View {
                         
                         Button("Next") {
                             withAnimation { step = 2 }
-                            startSensitivityCalibration()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                    }
-                    .padding(40)
-                    .transition(.opacity)
-                } else if step == 2 {
-                    // Step 2: Sensitivity slider
-                    VStack(spacing: 20) {
-                        Text("Step 1: Sensitivity")
-                            .font(.title)
-                            .fontWeight(.bold)
-
-                        Text("Knock on your Mac and adjust the slider\nuntil it feels right.")
-                            .font(.headline)
-                            .multilineTextAlignment(.center)
-
-                        Text("Too many false triggers → move left.\nKnocks not detected → move right.")
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-
-                        Spacer()
-
-                        // Knock indicator
-                        ZStack {
-                            Circle()
-                                .fill(knockFlash ? Color.green.opacity(0.25) : Color.secondary.opacity(0.08))
-                                .frame(width: 90, height: 90)
-                                .animation(.easeOut(duration: 0.35), value: knockFlash)
-                            Image(systemName: "hand.tap.fill")
-                                .font(.system(size: 38))
-                                .foregroundColor(knockFlash ? .green : .secondary)
-                                .animation(.easeOut(duration: 0.35), value: knockFlash)
-                        }
-
-                        // Slider
-                        VStack(spacing: 8) {
-                            HStack {
-                                Spacer()
-                                Text(sensitivityLabel)
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(sensitivityLabelColor)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 4)
-                                    .background(sensitivityLabelColor.opacity(0.12))
-                                    .cornerRadius(6)
-                                Spacer()
-                            }
-
-                            ZStack {
-                                Slider(value: $sensitivitySlider, in: 0...1)
-                                // Knock marker: shows where the detected tap falls on the scale
-                                GeometryReader { geo in
-                                    let thumb: CGFloat = 11
-                                    let x = thumb + (geo.size.width - thumb * 2) * knockMarkerPos
-                                    Capsule()
-                                        .fill(Color.green)
-                                        .frame(width: 4, height: 18)
-                                        .position(x: x, y: geo.size.height / 2)
-                                        .opacity(knockMarkerOpacity)
-                                        .animation(.easeOut(duration: 0.15), value: knockMarkerPos)
-                                }
-                                .allowsHitTesting(false)
-                            }
-                            HStack {
-                                Text("Less sensitive")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("More sensitive")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .padding(.horizontal, 8)
-
-                        Spacer()
-
-                        Button("Next") {
-                            withAnimation { step = 3 }
                             startVerificationCalibration()
                         }
                         .buttonStyle(.borderedProminent)
@@ -253,9 +163,8 @@ struct OnboardingView: View {
                     }
                     .padding(40)
                     .transition(.opacity)
-                    .onAppear { startSensitivityCalibration() }
-                } else if step == 3 {
-                    // Step 3: Verify
+                } else if step == 2 {
+                    // Step 2: Verify
                     VStack(spacing: 20) {
                         Text("Step 2: Test it out")
                             .font(.title)
@@ -309,8 +218,7 @@ struct OnboardingView: View {
                         HStack {
                             Button("Back") {
                                 verifyKnockCount = 0
-                                withAnimation { step = 2 }
-                                startSensitivityCalibration()
+                                withAnimation { step = 1 }
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.large)
@@ -360,77 +268,12 @@ struct OnboardingView: View {
         }
     }
     
-    // Maps slider 0…1 → threshold 0.10g…0.028g
-    private var sliderThreshold: Double {
-        0.10 - sensitivitySlider * 0.072
-    }
-
-    private var sensitivityLabel: String {
-        let t = sliderThreshold
-        switch t {
-        case ..<0.04: return "Very sensitive — light touch"
-        case ..<0.06: return "Sensitive — gentle knock"
-        case ..<0.08: return "Medium — normal knock"
-        default:       return "Firm knock required"
-        }
-    }
-
-    private var sensitivityLabelColor: Color {
-        let t = sliderThreshold
-        switch t {
-        case ..<0.04: return .blue
-        case ..<0.06: return .green
-        case ..<0.08: return .orange
-        default:       return .red
-        }
-    }
-
-    private func startSensitivityCalibration() {
-        stopCalibration()
-        NotificationCenter.default.post(name: NSNotification.Name("OnboardingStarted"), object: nil)
-
-        let reader = AccelerometerReader()
-        let detector = KnockDetector()
-        // Always use minimum threshold during sensitivity calibration so ALL knocks
-        // are detected regardless of slider position. The slider is purely visual here —
-        // it sets the saved threshold, not the detection threshold.
-        detector.setCalibrationMode(threshold: 0.02)
-        detector.singleKnockOnly = true
-
-        detector.onSingleKnock = { deviation in
-            DispatchQueue.main.async {
-                AudioServicesPlaySystemSound(1108)
-                self.knockFlash = true
-                // Position marker: (0.10 - deviation) / 0.08 maps deviation → slider space.
-                // Strong knock (high deviation) → marker left; light knock → marker right.
-                self.knockMarkerPos = min(1.0, max(0.0, (0.10 - deviation) / 0.072))
-                self.knockMarkerOpacity = 1.0
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    self.knockFlash = false
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    withAnimation(.easeOut(duration: 0.6)) {
-                        self.knockMarkerOpacity = 0
-                    }
-                }
-            }
-        }
-
-        reader.onSample = { sample in
-            detector.feed(sample)
-        }
-
-        self.calibrationReader = reader
-        self.calibrationDetector = detector
-    }
-
     private func startVerificationCalibration() {
         stopCalibration()
         verifyKnockCount = 0
 
         let reader = AccelerometerReader()
         let detector = KnockDetector()
-        detector.setCalibrationMode(threshold: sliderThreshold)
         // Shorter than production 1.0s so rapid sequential double-knocks
         // during verification aren't swallowed by cooldown. Still longer
         // than maxGap (0.325s) to avoid chassis-resonance re-triggers.
@@ -463,13 +306,7 @@ struct OnboardingView: View {
     
     private func finishOnboarding() {
         stopCalibration()
-        
-        // Save with 25% headroom so natural force variation still registers.
-        // Clamped: 0.028g (floor) … 0.10g (ceiling).
-        let finalThreshold = min(0.10, max(0.028, sliderThreshold * 0.75))
-        UserDefaults.standard.set(finalThreshold, forKey: "knockThreshold")
-        print("[Onboarding] Final calibrated threshold to \(finalThreshold) (slider was \(sliderThreshold))")
-        
+
         hasCompletedOnboarding = true
 
         // Notify the KnockController to reload settings and start listening
