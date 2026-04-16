@@ -104,7 +104,6 @@ struct OnboardingView: View {
                     .onAppear {
                         iconPulse = true
                         refreshScreenCaptureAccess()
-                        triggerScreenRecordingRequestIfNeeded()
                         if !checksStarted {
                             checksStarted = true
                             runSystemCheck()
@@ -300,18 +299,12 @@ struct OnboardingView: View {
     }
 
     private func requestScreenRecordingAccess() {
-        // Button always opens Settings. The TCC dialog is triggered on view appear
-        // (once, by the system) so we don't stack them.
+        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
+        // Registers the bundle in TCC so it appears in the Screen Recording list.
+        _ = CGRequestScreenCaptureAccess()
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
             NSWorkspace.shared.open(url)
         }
-    }
-
-    private func triggerScreenRecordingRequestIfNeeded() {
-        guard !hasScreenCapture else { return }
-        // Lowering the window level lets the TCC dialog render above us.
-        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-        _ = CGRequestScreenCaptureAccess()
     }
 
     private func updateCheck(id: String, granted: Bool) {
