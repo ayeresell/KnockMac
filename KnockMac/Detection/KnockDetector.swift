@@ -92,6 +92,7 @@ final class KnockDetector {
 
     private var history: [AccelSample] = []
     private var baselineBuffer: [Double] = []
+    private var baselineSum: Double = 0
     private var baseline: Double = 1.0
     private let baselineWindowSize = 50
 
