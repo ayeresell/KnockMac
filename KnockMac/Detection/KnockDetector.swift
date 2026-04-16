@@ -27,24 +27,24 @@ final class KnockDetector {
         self.gate = InputActivityGate()
         self.baseline = AdaptiveBaseline(
             windowSize: 200,
-            k: 4.0,
+            k: 5.0,
             sigmaFloor: 0.003,
             sigmaCeiling: 0.03,
-            absoluteFloor: 0.015
+            absoluteFloor: 0.030
         )
         self.tracker = CandidateTracker()
         self.shape = ShapeAnalyzer(
             maxAttackSamples: 20,
             minDecaySamples: 2,
             decayFraction: 0.5,
-            minZDominance: 0.8,
-            maxPreQuietDeviation: 0.010,
-            minPeakDeviation: 0.035
+            minZDominance: 1.0,
+            maxPreQuietDeviation: 0.020,
+            minPeakDeviation: 0.070
         )
         self.matcher = DoubleKnockMatcher(minGap: 0.08, maxGap: 0.5, maxAmpRatio: 4.0)
 
         wire()
-        print("[Detector] v2 initialized — k=4.0 absFloor=0.015 attack≤20 minPeak=0.035g zDom≥0.8 ampRatio≤4.0 gap=[0.08,0.5]s")
+        print("[Detector] v2 initialized — k=5.0 absFloor=0.030 attack≤20 minPeak=0.070g zDom≥1.0 ampRatio≤4.0 gap=[0.08,0.5]s")
     }
 
     private func wire() {
