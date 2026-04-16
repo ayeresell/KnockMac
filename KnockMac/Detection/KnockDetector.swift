@@ -18,28 +18,49 @@ final class KnockDetector {
 
     private var lastDoubleTriggerTime: TimeInterval = 0
     private var unfreezeAfter: TimeInterval = 0
+    private var lastStatusLog: TimeInterval = 0
+    private var gateSuppressCount: Int = 0
 
     init() {
+        // Lowered k and absoluteFloor from defaults so lighter knocks register.
+        // Relaxed attack window and Z-dominance so real-world impulses pass.
         self.gate = InputActivityGate()
-        self.baseline = AdaptiveBaseline()
+        self.baseline = AdaptiveBaseline(
+            windowSize: 200,
+            k: 4.0,
+            sigmaFloor: 0.003,
+            sigmaCeiling: 0.03,
+            absoluteFloor: 0.015
+        )
         self.tracker = CandidateTracker()
-        self.shape = ShapeAnalyzer()
+        self.shape = ShapeAnalyzer(
+            maxAttackSamples: 6,
+            minDecaySamples: 2,
+            decayFraction: 0.5,
+            minZDominance: 1.1,
+            maxPreQuietDeviation: 0.020
+        )
         self.matcher = DoubleKnockMatcher()
 
         wire()
+        print("[Detector] v2 initialized — k=4.0 absFloor=0.015 attack≤6 zDom≥1.1")
     }
 
     private func wire() {
         tracker.onImpulse = { [weak self] window in
             guard let self else { return }
             let now = ProcessInfo.processInfo.systemUptime
+            let peakDev = abs(window.samples[window.peakIndex].magnitude - window.baseline)
+            let impulseStart = self.findImpulseStart(window)
+            let attack = max(0, window.peakIndex - impulseStart)
+            print("[Tracker] impulse emitted: peak=\(String(format: "%.3f", peakDev))g attack=\(attack) samples=\(window.samples.count) baseline=\(String(format: "%.3f", window.baseline))g")
+
             switch self.shape.classify(window) {
             case .accept(let peak):
-                let impulseStart = self.findImpulseStart(window)
-                let attack = max(0, window.peakIndex - impulseStart)
+                print("[Shape] ✅ accept peak=\(String(format: "%.3f", peak))g attack=\(attack)")
                 self.matcher.submit(KnockEvent(time: now, peak: peak, attackSamples: attack))
             case .reject(let reason):
-                print("[Detector] reject: \(reason)")
+                print("[Shape] ❌ reject: \(reason)")
             }
             self.unfreezeAfter = now + 0.5
         }
@@ -51,11 +72,11 @@ final class KnockDetector {
             guard let self else { return }
             let now = ProcessInfo.processInfo.systemUptime
             guard now - self.lastDoubleTriggerTime > self.cooldown else {
-                print("[Detector] double suppressed by cooldown")
+                print("[Detector] double suppressed by cooldown (\(String(format: "%.2f", now - self.lastDoubleTriggerTime))s < \(self.cooldown)s)")
                 return
             }
             self.lastDoubleTriggerTime = now
-            print("[Detector] ✅ DOUBLE KNOCK gap=\(String(format: "%.3f", gap))s peak=\(String(format: "%.3f", peak))g")
+            print("[Detector] 🎯 DOUBLE KNOCK gap=\(String(format: "%.3f", gap))s peak=\(String(format: "%.3f", peak))g")
             self.onDoubleKnockWithGap?(gap, peak)
             self.onKnock?()
         }
@@ -71,6 +92,7 @@ final class KnockDetector {
 
         if gate.shouldSuppress() {
             baseline.feed(sample.magnitude)
+            gateSuppressCount += 1
             return
         }
 
@@ -78,7 +100,15 @@ final class KnockDetector {
         let dev = abs(sample.magnitude - baseline.baseline)
         let threshold = baseline.thresholdDeviation
 
+        // Periodic status log every 2s so user can watch baseline/threshold drift.
+        if now - lastStatusLog > 2.0 {
+            lastStatusLog = now
+            print("[Detector] status: baseline=\(String(format: "%.3f", baseline.baseline))g σ=\(String(format: "%.4f", baseline.sigma)) threshold=\(String(format: "%.3f", threshold))g gateSuppressed=\(gateSuppressCount)")
+            gateSuppressCount = 0
+        }
+
         if dev > threshold {
+            print("[Detector] dev=\(String(format: "%.3f", dev))g > threshold=\(String(format: "%.3f", threshold))g → candidate")
             baseline.freeze()
         }
         tracker.feed(sample, deviation: dev, threshold: threshold, baseline: baseline.baseline)
@@ -92,7 +122,7 @@ final class KnockDetector {
 
     private func findImpulseStart(_ w: CandidateTracker.ImpulseWindow) -> Int {
         for (i, s) in w.samples.enumerated() {
-            if abs(s.magnitude - w.baseline) > 0.025 {
+            if abs(s.magnitude - w.baseline) > 0.020 {
                 return i
             }
         }
