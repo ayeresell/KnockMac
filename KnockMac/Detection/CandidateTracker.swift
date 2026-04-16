@@ -67,11 +67,11 @@ final class CandidateTracker {
         }
     }
 
-    private func emit() {
+    private func emit(clearPreBuffer: Bool = false) {
         let all = preBuffer + collected
         let window = ImpulseWindow(samples: all, peakIndex: peakIndex, baseline: baselineAtStart)
         onImpulse?(window)
-        preBuffer = Array(all.suffix(preBufferSize))
+        preBuffer = clearPreBuffer ? [] : Array(all.suffix(preBufferSize))
         collected = []
     }
 }
