@@ -357,6 +357,20 @@ struct OnboardingView: View {
         withAnimation(.easeOut(duration: 0.2)) {
             checks[idx].status = .scanning
         }
+        // If the real-world signal already arrived before we reached this stage,
+        // resolve right after the scanning state becomes visible so user sees the
+        // spinner briefly before the green tick.
+        if id == "sensor" && hasAccelerometer {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                updateCheck(id: "sensor", granted: true)
+            }
+        }
+        if id == "permission" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                refreshScreenCaptureAccess()
+                updateCheck(id: "permission", granted: hasScreenCapture)
+            }
+        }
     }
 
     private func resolve(id: String, detail: String) {
