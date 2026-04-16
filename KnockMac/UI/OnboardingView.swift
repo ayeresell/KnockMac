@@ -261,41 +261,69 @@ struct OnboardingView: View {
                             .font(.title)
                             .fontWeight(.bold)
 
-                        Text("Double-knock to confirm\nyour settings work.")
+                        Text("Double-knock 3 times to confirm\nyour settings work.")
                             .font(.headline)
                             .multilineTextAlignment(.center)
 
                         Spacer()
 
+                        // Progress dots
+                        HStack(spacing: 16) {
+                            ForEach(0..<3) { i in
+                                Circle()
+                                    .fill(verifyKnockCount > i ? Color.green : Color.secondary.opacity(0.2))
+                                    .frame(width: 22, height: 22)
+                                    .overlay(
+                                        Image(systemName: "checkmark")
+                                            .font(.caption.bold())
+                                            .foregroundColor(.white)
+                                            .opacity(verifyKnockCount > i ? 1 : 0)
+                                    )
+                                    .animation(.easeOut(duration: 0.25), value: verifyKnockCount)
+                            }
+                        }
+
                         ZStack {
                             Circle()
-                                .fill(verifyKnockCount > 0 ? Color.green.opacity(0.25) : Color.secondary.opacity(0.08))
+                                .fill(verifyKnockCount >= 3 ? Color.green.opacity(0.25) : Color.secondary.opacity(0.08))
                                 .frame(width: 90, height: 90)
                                 .animation(.easeOut(duration: 0.35), value: verifyKnockCount)
-                            Image(systemName: verifyKnockCount > 0 ? "checkmark" : "hand.tap.fill")
+                            Image(systemName: verifyKnockCount >= 3 ? "checkmark" : "hand.tap.fill")
                                 .font(.system(size: 38))
-                                .foregroundColor(verifyKnockCount > 0 ? .green : .secondary)
+                                .foregroundColor(verifyKnockCount >= 3 ? .green : .secondary)
                                 .animation(.easeOut(duration: 0.35), value: verifyKnockCount)
                         }
 
-                        if verifyKnockCount > 0 {
-                            Text("Works perfectly!")
+                        if verifyKnockCount >= 3 {
+                            Text("All done!")
                                 .font(.headline)
                                 .foregroundColor(.green)
                         } else {
-                            Text("Waiting for double-knock…")
+                            Text("Knock \(verifyKnockCount + 1) of 3…")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
 
                         Spacer()
 
-                        Button("Finish") {
-                            finishOnboarding()
+                        HStack {
+                            Button("Back") {
+                                verifyKnockCount = 0
+                                withAnimation { step = 2 }
+                                startSensitivityCalibration()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+
+                            Spacer()
+
+                            Button("Finish") {
+                                finishOnboarding()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .disabled(verifyKnockCount < 3)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .disabled(verifyKnockCount < 1)
                     }
                     .padding(40)
                     .transition(.opacity)
