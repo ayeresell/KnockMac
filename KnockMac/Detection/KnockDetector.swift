@@ -208,14 +208,12 @@ final class KnockDetector {
             lastTriggerTime = now
             firstKnockTime = 0
             pendingCallback = .double(gap: gap)
-            initialPeakDeviation = initialPeak
             pendingPeakDeviation = initialPeak
             peakTrackingSamplesLeft = 5
         } else {
             print("[KnockDetector] 1st knock (\(votes)/5 [\(votingAlgos.joined(separator:", "))]) initial=\(String(format:"%.3f", initialPeak))g")
             if !singleKnockOnly { firstKnockTime = now }
             pendingCallback = .single
-            initialPeakDeviation = initialPeak
             pendingPeakDeviation = initialPeak
             peakTrackingSamplesLeft = 5
         }
