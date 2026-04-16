@@ -299,21 +299,18 @@ struct OnboardingView: View {
     }
 
     private func requestScreenRecordingAccess() {
-        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-
-        let hasRequested = UserDefaults.standard.bool(forKey: "hasRequestedScreenRecording")
-        if !hasRequested {
-            // First time: the system dialog appears with its own "Open System Settings"
-            // button. Don't also open Settings — user should interact with the dialog.
-            UserDefaults.standard.set(true, forKey: "hasRequestedScreenRecording")
-            _ = CGRequestScreenCaptureAccess()
-        } else {
-            // Already requested before: no dialog will appear, open Settings directly.
-            _ = CGPreflightScreenCaptureAccess()
-            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                NSWorkspace.shared.open(url)
-            }
+        // Button always opens Settings. The TCC dialog is triggered on view appear
+        // (once, by the system) so we don't stack them.
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            NSWorkspace.shared.open(url)
         }
+    }
+
+    private func triggerScreenRecordingRequestIfNeeded() {
+        guard !hasScreenCapture else { return }
+        // Lowering the window level lets the TCC dialog render above us.
+        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
+        _ = CGRequestScreenCaptureAccess()
     }
 
     private func updateCheck(id: String, granted: Bool) {
