@@ -14,7 +14,7 @@ final class CandidateTracker {
     private let quietRunToEnd: Int = 5
     private let preBufferSize: Int = 10
 
-    private enum State { case idle, collecting }
+    private enum State { case idle, collecting, draining }
     private var state: State = .idle
 
     private var preBuffer: [AccelSample] = []
