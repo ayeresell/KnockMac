@@ -62,7 +62,12 @@ struct OnboardingView: View {
                             ForEach(checks.indices, id: \.self) { idx in
                                 SystemCheckRow(check: checks[idx]) {
                                     NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-                                    CGRequestScreenCaptureAccess()
+                                    // Ensure our app is registered in the Screen Recording list
+                                    // (otherwise it won't appear in Settings for the user to toggle).
+                                    _ = CGPreflightScreenCaptureAccess()
+                                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                                        NSWorkspace.shared.open(url)
+                                    }
                                 }
                                 .transition(.opacity)
                             }
