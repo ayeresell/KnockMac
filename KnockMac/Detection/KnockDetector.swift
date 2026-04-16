@@ -96,8 +96,8 @@ final class KnockDetector {
     private var baseline: Double = 1.0
     private let baselineWindowSize = 50
 
-    private let minGap: TimeInterval = 0.20
-    private let maxGap: TimeInterval = 0.30
+    private let minGap: TimeInterval = 0.175
+    private let maxGap: TimeInterval = 0.325
     private let cooldown: TimeInterval = 1.0
 
     private var inKnock = false
