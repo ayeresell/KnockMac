@@ -35,6 +35,11 @@ final class ShapeAnalyzer {
         let peakSample = samples[w.peakIndex]
         let peakDeviation = abs(peakSample.magnitude - w.baseline)
 
+        // 0. Minimum peak check — filters out chassis echoes from earlier impacts.
+        if peakDeviation < minPeakDeviation {
+            return .reject(reason: "peak_too_weak=\(String(format: "%.3f", peakDeviation))g")
+        }
+
         // 1. Find impulse start: first sample where dev > maxPreQuietDeviation.
         var impulseStart = 0
         for (i, s) in samples.enumerated() {
