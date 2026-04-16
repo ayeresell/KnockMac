@@ -474,7 +474,11 @@ class OnboardingWindowManager {
                 defer: false
             )
             newWindow.title = title
+            newWindow.titlebarAppearsTransparent = true
+            newWindow.titleVisibility = .hidden
+            newWindow.isMovableByWindowBackground = true
             newWindow.isReleasedWhenClosed = false
+            newWindow.backgroundColor = .clear
             newWindow.contentViewController = hostingController
             newWindow.level = .floating
             newWindow.center()
