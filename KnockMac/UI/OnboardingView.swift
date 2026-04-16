@@ -295,6 +295,27 @@ struct OnboardingView: View {
     private var allChecksPassed: Bool {
         checks.allSatisfy { $0.status == .passed }
     }
+    private var hasPermissionFailure: Bool {
+        checks.contains(where: { $0.id == "permission" && $0.status == .failed })
+    }
+
+    private func requestScreenRecordingAccess() {
+        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
+
+        let hasRequested = UserDefaults.standard.bool(forKey: "hasRequestedScreenRecording")
+        if !hasRequested {
+            // First time: the system dialog appears with its own "Open System Settings"
+            // button. Don't also open Settings — user should interact with the dialog.
+            UserDefaults.standard.set(true, forKey: "hasRequestedScreenRecording")
+            _ = CGRequestScreenCaptureAccess()
+        } else {
+            // Already requested before: no dialog will appear, open Settings directly.
+            _ = CGPreflightScreenCaptureAccess()
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                NSWorkspace.shared.open(url)
+            }
+        }
+    }
 
     private func updateCheck(id: String, granted: Bool) {
         guard let idx = checks.firstIndex(where: { $0.id == id }) else { return }
