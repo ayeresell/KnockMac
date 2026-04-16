@@ -475,3 +475,156 @@ class OnboardingWindowManager {
         }
     }
 }
+
+// MARK: - System check model & row view
+
+enum CheckStatus: Equatable {
+    case pending
+    case scanning
+    case passed
+    case failed
+}
+
+struct SystemCheck: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let icon: String
+    var detail: String? = nil
+    var status: CheckStatus = .pending
+    var showsGrantOnFailure: Bool = false
+
+    static func initial() -> [SystemCheck] {
+        [
+            SystemCheck(id: "macos", title: "Operating System", icon: "desktopcomputer"),
+            SystemCheck(id: "chip", title: "Processor", icon: "cpu"),
+            SystemCheck(id: "memory", title: "Memory", icon: "memorychip"),
+            SystemCheck(id: "sensor", title: "Motion Sensor", icon: "sensor.tag.radiowaves.forward"),
+            SystemCheck(id: "permission", title: "Screen Recording", icon: "camera.viewfinder",
+                        showsGrantOnFailure: true)
+        ]
+    }
+}
+
+struct SystemCheckRow: View {
+    let check: SystemCheck
+    var onGrant: () -> Void = {}
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: check.icon)
+                .font(.system(size: 14))
+                .foregroundColor(iconColor)
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(check.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(titleColor)
+                if let detail = check.detail {
+                    Text(detail)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .transition(.opacity)
+                }
+            }
+
+            Spacer()
+
+            statusIndicator
+        }
+        .padding(.vertical, 2)
+        .opacity(check.status == .pending ? 0.4 : 1.0)
+    }
+
+    @ViewBuilder
+    private var statusIndicator: some View {
+        switch check.status {
+        case .pending:
+            Image(systemName: "circle.dotted")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+        case .scanning:
+            ProgressView()
+                .scaleEffect(0.5)
+                .frame(width: 18, height: 18)
+        case .passed:
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 14))
+                .foregroundColor(.green)
+                .transition(.scale.combined(with: .opacity))
+        case .failed:
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(.orange)
+                if check.showsGrantOnFailure {
+                    Button("Grant") { onGrant() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                }
+            }
+        }
+    }
+
+    private var iconColor: Color {
+        switch check.status {
+        case .pending: return .secondary
+        case .scanning: return .blue
+        case .passed: return .green
+        case .failed: return .orange
+        }
+    }
+
+    private var titleColor: Color {
+        check.status == .pending ? .secondary : .primary
+    }
+}
+
+// MARK: - System info readers
+
+enum SystemInfo {
+    static func osDescription() -> String {
+        let v = ProcessInfo.processInfo.operatingSystemVersion
+        let build = sysctlString("kern.osversion") ?? "?"
+        return "macOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion) (\(build))"
+    }
+
+    static func chipDescription() -> String {
+        let brand = sysctlString("machdep.cpu.brand_string") ?? "Apple Silicon"
+        let cores = sysctlInt("hw.perflevel0.physicalcpu") ?? 0
+        let effCores = sysctlInt("hw.perflevel1.physicalcpu") ?? 0
+        if cores > 0 && effCores > 0 {
+            return "\(brand) · \(cores)P + \(effCores)E cores"
+        }
+        let total = sysctlInt("hw.physicalcpu") ?? 0
+        return total > 0 ? "\(brand) · \(total) cores" : brand
+    }
+
+    static func memoryDescription() -> String {
+        guard let bytes = sysctlUInt64("hw.memsize") else { return "Unknown" }
+        let gb = Double(bytes) / 1024 / 1024 / 1024
+        return String(format: "%.0f GB unified memory", gb)
+    }
+
+    static func sysctlString(_ name: String) -> String? {
+        var size: size_t = 0
+        guard sysctlbyname(name, nil, &size, nil, 0) == 0, size > 0 else { return nil }
+        var buffer = [CChar](repeating: 0, count: size)
+        guard sysctlbyname(name, &buffer, &size, nil, 0) == 0 else { return nil }
+        return String(cString: buffer)
+    }
+
+    static func sysctlInt(_ name: String) -> Int? {
+        var value: Int32 = 0
+        var size = MemoryLayout<Int32>.size
+        guard sysctlbyname(name, &value, &size, nil, 0) == 0 else { return nil }
+        return Int(value)
+    }
+
+    static func sysctlUInt64(_ name: String) -> UInt64? {
+        var value: UInt64 = 0
+        var size = MemoryLayout<UInt64>.size
+        guard sysctlbyname(name, &value, &size, nil, 0) == 0 else { return nil }
+        return value
+    }
+}
