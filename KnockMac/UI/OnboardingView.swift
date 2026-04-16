@@ -406,9 +406,10 @@ struct OnboardingView: View {
 
         detector.onDoubleKnockWithGap = { _, _ in
             DispatchQueue.main.async {
+                guard self.verifyKnockCount < 3 else { return }
                 self.verifyKnockCount += 1
                 AudioServicesPlaySystemSound(1108)
-                if self.verifyKnockCount >= 1 {
+                if self.verifyKnockCount >= 3 {
                     self.stopCalibration()
                 }
             }
