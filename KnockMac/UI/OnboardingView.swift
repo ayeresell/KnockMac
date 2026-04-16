@@ -156,89 +156,6 @@ struct OnboardingView: View {
                         
                         Button("Next") {
                             withAnimation { step = 2 }
-                            startSensitivityCalibration()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                    }
-                    .padding(40)
-                    .transition(.opacity)
-                } else if step == 2 {
-                    // Step 2: Sensitivity slider
-                    VStack(spacing: 20) {
-                        Text("Step 1: Sensitivity")
-                            .font(.title)
-                            .fontWeight(.bold)
-
-                        Text("Knock on your Mac and adjust the slider\nuntil it feels right.")
-                            .font(.headline)
-                            .multilineTextAlignment(.center)
-
-                        Text("Too many false triggers → move left.\nKnocks not detected → move right.")
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-
-                        Spacer()
-
-                        // Knock indicator
-                        ZStack {
-                            Circle()
-                                .fill(knockFlash ? Color.green.opacity(0.25) : Color.secondary.opacity(0.08))
-                                .frame(width: 90, height: 90)
-                                .animation(.easeOut(duration: 0.35), value: knockFlash)
-                            Image(systemName: "hand.tap.fill")
-                                .font(.system(size: 38))
-                                .foregroundColor(knockFlash ? .green : .secondary)
-                                .animation(.easeOut(duration: 0.35), value: knockFlash)
-                        }
-
-                        // Slider
-                        VStack(spacing: 8) {
-                            HStack {
-                                Spacer()
-                                Text(sensitivityLabel)
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(sensitivityLabelColor)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 4)
-                                    .background(sensitivityLabelColor.opacity(0.12))
-                                    .cornerRadius(6)
-                                Spacer()
-                            }
-
-                            ZStack {
-                                Slider(value: $sensitivitySlider, in: 0...1)
-                                // Knock marker: shows where the detected tap falls on the scale
-                                GeometryReader { geo in
-                                    let thumb: CGFloat = 11
-                                    let x = thumb + (geo.size.width - thumb * 2) * knockMarkerPos
-                                    Capsule()
-                                        .fill(Color.green)
-                                        .frame(width: 4, height: 18)
-                                        .position(x: x, y: geo.size.height / 2)
-                                        .opacity(knockMarkerOpacity)
-                                        .animation(.easeOut(duration: 0.15), value: knockMarkerPos)
-                                }
-                                .allowsHitTesting(false)
-                            }
-                            HStack {
-                                Text("Less sensitive")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("More sensitive")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        .padding(.horizontal, 8)
-
-                        Spacer()
-
-                        Button("Next") {
-                            withAnimation { step = 3 }
                             startVerificationCalibration()
                         }
                         .buttonStyle(.borderedProminent)
@@ -246,8 +163,7 @@ struct OnboardingView: View {
                     }
                     .padding(40)
                     .transition(.opacity)
-                    .onAppear { startSensitivityCalibration() }
-                } else if step == 3 {
+                } else if step == 2 {
                     // Step 3: Verify
                     VStack(spacing: 20) {
                         Text("Step 2: Test it out")
