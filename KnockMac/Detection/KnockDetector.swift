@@ -35,11 +35,14 @@ struct EnergyAlgorithm: KnockAlgorithm {
     let magnitudeThreshold: Double
     var energyThreshold: Double { max(0.0002, magnitudeThreshold * 0.015) }
     func analyze(sample: AccelSample, history: [AccelSample], baseline: Double) -> Bool {
-        let recent = history.suffix(3) + [sample]
-        guard recent.count >= 3 else { return false }
-        let vals = recent.map(\.magnitude)
-        let mean = vals.reduce(0, +) / Double(vals.count)
-        let variance = vals.map { pow($0 - mean, 2) }.reduce(0, +) / Double(vals.count)
+        guard history.count >= 3 else { return false }
+        // Inline to avoid array allocations on every sample (called at 100 Hz).
+        let m0 = history[history.count - 3].magnitude
+        let m1 = history[history.count - 2].magnitude
+        let m2 = history[history.count - 1].magnitude
+        let m3 = sample.magnitude
+        let mean = (m0 + m1 + m2 + m3) * 0.25
+        let variance = (pow(m0 - mean, 2) + pow(m1 - mean, 2) + pow(m2 - mean, 2) + pow(m3 - mean, 2)) * 0.25
         return variance > energyThreshold
     }
 }
