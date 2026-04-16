@@ -560,10 +560,11 @@ struct SystemCheckRow: View {
 
             if check.status == .failed && check.showsGrantOnFailure {
                 HStack {
-                    Spacer().frame(width: 30)
+                    Spacer()
                     Button("Open System Settings") { onGrant() }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .buttonBorderShape(.capsule)
                     Spacer()
                 }
                 .transition(.opacity)
