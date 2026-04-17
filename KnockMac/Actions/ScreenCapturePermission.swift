@@ -1,19 +1,12 @@
 import Foundation
-import ScreenCaptureKit
+import CoreGraphics
 
 enum ScreenCapturePermission {
-    // CGPreflightScreenCaptureAccess caches a `true` result for the process
-    // lifetime, so permission revoked in System Settings mid-session still
-    // reads as granted. Fetching SCShareableContent surfaces the live TCC
-    // state — it throws when access has been revoked.
-    static func probe() async -> Bool {
-        do {
-            _ = try await SCShareableContent.excludingDesktopWindows(
-                false, onScreenWindowsOnly: true
-            )
-            return true
-        } catch {
-            return false
-        }
-    }
+    // Snapshot taken once at first access (app launch). Screen Recording
+    // permission changes require a full app restart to take effect — macOS
+    // prompts "Quit & Reopen" when the TCC entry is toggled. Treating this
+    // value as immutable for the process lifetime keeps the System Check in
+    // sync with the effective runtime permission: it only flips after the
+    // user actually restarts the app.
+    static let launchTimeGranted: Bool = CGPreflightScreenCaptureAccess()
 }
