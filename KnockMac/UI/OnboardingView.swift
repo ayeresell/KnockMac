@@ -523,8 +523,12 @@ class OnboardingWindowManager {
             window?.title = title
         }
 
-        window?.makeKeyAndOrderFront(nil)
+        // LSUIElement apps relaunched by TCC after a permission grant can come up
+        // in the background. Force activation + orderFrontRegardless, then retry on
+        // the next runloop in case another app reclaims focus right after us.
         NSApp.activate(ignoringOtherApps: true)
+        window?.makeKeyAndOrderFront(nil)
+        window?.orderFrontRegardless()
         DispatchQueue.main.async {
             if let window = self.window, let screen = window.screen ?? NSScreen.main {
                 let screenFrame = screen.frame
@@ -533,6 +537,8 @@ class OnboardingWindowManager {
                 let y = screenFrame.midY - windowFrame.height / 2
                 window.setFrameOrigin(NSPoint(x: x, y: y))
             }
+            NSApp.activate(ignoringOtherApps: true)
+            self.window?.makeKeyAndOrderFront(nil)
         }
     }
 }
