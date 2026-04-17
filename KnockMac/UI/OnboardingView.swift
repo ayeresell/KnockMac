@@ -275,10 +275,7 @@ struct OnboardingView: View {
     }
     
     private func refreshScreenCaptureAccess() {
-        // Locked to the launch-time snapshot. Any change in System Settings
-        // requires "Quit & Reopen" to take effect — the System Check reflects
-        // the effective runtime permission, not the TCC checkbox state.
-        hasScreenCapture = ScreenCapturePermission.launchTimeGranted
+        hasScreenCapture = CGPreflightScreenCaptureAccess()
     }
 
     private func runSystemCheck() {
@@ -388,9 +385,9 @@ struct OnboardingView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.60) {
             statusLine = "Verifying capture permissions…"
             setChecking(id: "permission")
-            let granted = ScreenCapturePermission.launchTimeGranted
-            hasScreenCapture = granted
-            updateCheck(id: "permission", granted: granted)
+            // Resolve immediately based on current state.
+            refreshScreenCaptureAccess()
+            updateCheck(id: "permission", granted: hasScreenCapture)
         }
     }
 
@@ -409,9 +406,8 @@ struct OnboardingView: View {
         }
         if id == "permission" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                let granted = ScreenCapturePermission.launchTimeGranted
-                hasScreenCapture = granted
-                updateCheck(id: "permission", granted: granted)
+                refreshScreenCaptureAccess()
+                updateCheck(id: "permission", granted: hasScreenCapture)
             }
         }
     }
