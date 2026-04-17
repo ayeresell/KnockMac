@@ -275,6 +275,13 @@ struct OnboardingView: View {
     }
     
     private func refreshScreenCaptureAccess() {
+        // During first-run onboarding the status is frozen to the launch-time
+        // snapshot so the user must click "Quit & Reopen" after granting. Live
+        // probing is only used once onboarding has completed (Settings reopen).
+        if !hasCompletedOnboarding {
+            hasScreenCapture = ScreenCapturePermission.launchTimeGranted
+            return
+        }
         Task {
             let granted = await ScreenCapturePermission.probe()
             await MainActor.run { hasScreenCapture = granted }
