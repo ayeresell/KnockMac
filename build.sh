@@ -41,12 +41,22 @@ mkdir -p "$STAGING"
 cp -R "$APP_PATH" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
 
+echo "→ Cleaning any stale KnockMac mounts"
+for v in /Volumes/KnockMac*; do
+    [[ -d "$v" ]] && hdiutil detach "$v" -force > /dev/null 2>&1 || true
+done
+
 echo "→ Creating writable DMG"
 hdiutil create -volname "KnockMac" -srcfolder "$STAGING" -ov -format UDRW \
     -size 30m "$RW_DMG" > /dev/null
 
 MOUNT=$(hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen | \
-    awk '/\/Volumes\/KnockMac/ {print $NF}')
+    grep -o '/Volumes/KnockMac[^[:space:]]*' | head -1)
+if [[ -z "$MOUNT" ]]; then
+    # Fallback for mount paths containing spaces.
+    MOUNT=$(ls -td /Volumes/KnockMac* 2>/dev/null | head -1)
+fi
+[[ -n "$MOUNT" ]] || { echo "Mount failed"; exit 1; }
 
 echo "→ Styling window at $MOUNT"
 osascript <<EOF
