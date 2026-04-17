@@ -127,7 +127,6 @@ struct OnboardingView: View {
                     .transition(.opacity)
                     .onAppear {
                         iconPulse = true
-                        refreshScreenCaptureAccess()
                         if !checksStarted {
                             checksStarted = true
                             runSystemCheck()
@@ -135,7 +134,9 @@ struct OnboardingView: View {
                         }
                     }
                     .onReceive(Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()) { _ in
-                        if !hasScreenCapture { refreshScreenCaptureAccess() }
+                        if permissionStageStarted && !hasScreenCapture {
+                            refreshScreenCaptureAccess()
+                        }
                     }
                     .onChange(of: hasScreenCapture) { _, granted in
                         updateCheck(id: "permission", granted: granted)
