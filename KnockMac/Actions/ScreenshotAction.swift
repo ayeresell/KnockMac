@@ -6,6 +6,16 @@ import AudioToolbox
 
 enum ScreenshotAction {
 
+    // Native macOS screenshot "Grab" sound. Registered once and reused —
+    // AudioServicesCreateSystemSoundID is cheap to call repeatedly but the
+    // sound ID itself is persistent for the process lifetime.
+    private static let grabSoundID: SystemSoundID = {
+        var id: SystemSoundID = 0
+        let url = URL(fileURLWithPath: "/System/Library/Components/CoreAudio.component/Contents/SharedSupport/SystemSounds/system/Grab.aif")
+        AudioServicesCreateSystemSoundID(url as CFURL, &id)
+        return id
+    }()
+
     static func captureFullScreen() {
         print("[Screenshot] Starting capture...")
 
