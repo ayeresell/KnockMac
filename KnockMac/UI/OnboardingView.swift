@@ -32,50 +32,56 @@ struct OnboardingView: View {
             Group {
                 if step == 0 {
                     // Step 0: Animated System Check
-                    VStack(spacing: 16) {
-                        Image(systemName: "laptopcomputer.and.iphone")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 72, height: 72)
-                            .foregroundColor(.blue)
-                            .scaleEffect(iconPulse ? 1.05 : 1.0)
-                            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: iconPulse)
+                    VStack(spacing: 0) {
+                        VStack(spacing: 16) {
+                            Image(systemName: "laptopcomputer.and.iphone")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 72, height: 72)
+                                .foregroundColor(.blue)
+                                .scaleEffect(iconPulse ? 1.05 : 1.0)
+                                .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: iconPulse)
 
-                        Text("System Check")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                            Text("System Check")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
 
-                        HStack(spacing: 6) {
-                            if !allChecksFinished {
-                                ProgressView().scaleEffect(0.55)
-                            } else if allChecksPassed {
-                                Image(systemName: "checkmark.seal.fill").foregroundColor(.green)
+                            HStack(spacing: 6) {
+                                if !allChecksFinished {
+                                    ProgressView().scaleEffect(0.55)
+                                } else if allChecksPassed {
+                                    Image(systemName: "checkmark.seal.fill").foregroundColor(.green)
+                                }
+                                Text(statusLine)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .animation(.easeOut(duration: 0.2), value: statusLine)
                             }
-                            Text(statusLine)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .animation(.easeOut(duration: 0.2), value: statusLine)
-                        }
-                        .frame(height: 20)
+                            .frame(height: 20)
 
-                        VStack(spacing: 10) {
-                            ForEach(checks.indices, id: \.self) { idx in
-                                SystemCheckRow(check: checks[idx])
-                                    .transition(.opacity)
+                            VStack(spacing: 10) {
+                                ForEach(checks.indices, id: \.self) { idx in
+                                    SystemCheckRow(check: checks[idx])
+                                        .transition(.opacity)
+                                }
                             }
+                            .padding(16)
+                            .frame(width: 420)
+                            .background(
+                                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                    .fill(.regularMaterial)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                            )
                         }
-                        .padding(16)
-                        .frame(width: 420)
-                        .background(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .fill(.regularMaterial)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-                        )
+                        .padding(.top, 26)
+                        .padding(.horizontal, 30)
 
-                        // Action button immediately below card (no flexible spacer)
+                        Spacer(minLength: 0)
+
+                        // Button auto-centers between card and window bottom via flexible spacers.
                         Group {
                             if allChecksPassed {
                                 Button("Continue") {
@@ -95,11 +101,9 @@ struct OnboardingView: View {
                                 .transition(.opacity.combined(with: .scale))
                             }
                         }
-                        .padding(.top, 4)
+
+                        Spacer(minLength: 0)
                     }
-                    .padding(.top, 26)
-                    .padding(.horizontal, 30)
-                    .padding(.bottom, 14)
                     .transition(.opacity)
                     .onAppear {
                         iconPulse = true
