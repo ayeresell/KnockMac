@@ -320,6 +320,9 @@ struct OnboardingView: View {
             if id == "sensor" && granted {
                 checks[idx].detail = "Apple Silicon IMU · 100 Hz"
             }
+            if id == "permission" && granted {
+                checks[idx].detail = "Access granted"
+            }
         }
         advanceStatusLineIfDone()
     }
