@@ -388,9 +388,13 @@ struct OnboardingView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.60) {
             statusLine = "Verifying capture permissions…"
             setChecking(id: "permission")
-            // Resolve immediately based on current state.
-            refreshScreenCaptureAccess()
-            updateCheck(id: "permission", granted: hasScreenCapture)
+            Task {
+                let granted = await ScreenCapturePermission.probe()
+                await MainActor.run {
+                    hasScreenCapture = granted
+                    updateCheck(id: "permission", granted: granted)
+                }
+            }
         }
     }
 
