@@ -401,10 +401,11 @@ struct OnboardingView: View {
             statusLine = "Verifying capture permissions…"
             setChecking(id: "permission")
             Task {
-                let granted = await ScreenCapturePermission.probe()
+                let status = await ScreenCapturePermission.currentStatus()
                 await MainActor.run {
-                    hasScreenCapture = granted
-                    updateCheck(id: "permission", granted: granted)
+                    needsCaptureRestart = (status == .restartRequired)
+                    hasScreenCapture = (status == .granted)
+                    updateCheck(id: "permission", granted: status == .granted)
                 }
             }
         }
