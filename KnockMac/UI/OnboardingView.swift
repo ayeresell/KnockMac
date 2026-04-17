@@ -427,10 +427,11 @@ struct OnboardingView: View {
         if id == "permission" {
             Task {
                 try? await Task.sleep(nanoseconds: 300_000_000)
-                let granted = await ScreenCapturePermission.probe()
+                let status = await ScreenCapturePermission.currentStatus()
                 await MainActor.run {
-                    hasScreenCapture = granted
-                    updateCheck(id: "permission", granted: granted)
+                    needsCaptureRestart = (status == .restartRequired)
+                    hasScreenCapture = (status == .granted)
+                    updateCheck(id: "permission", granted: status == .granted)
                 }
             }
         }
