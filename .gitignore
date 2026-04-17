@@ -7,3 +7,8 @@ DerivedData/
 *.d
 *.swp
 project.xcworkspace/xcuserdata/
+
+# Local-only tooling and notes
+CLAUDE.md
+.claude/
+docs/superpowers/
