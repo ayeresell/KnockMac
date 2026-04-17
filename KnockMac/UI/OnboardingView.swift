@@ -547,6 +547,9 @@ class OnboardingWindowManager {
         window?.close()
         window = nil
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+        // Pause the main KnockController so its detector doesn't fire screenshots
+        // while the settings wizard runs its own calibration reader on step 2.
+        NotificationCenter.default.post(name: NSNotification.Name("OnboardingStarted"), object: nil)
         show(title: "KnockMac Settings", startAtStep: 0)
     }
 
