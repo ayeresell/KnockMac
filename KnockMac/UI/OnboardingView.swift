@@ -20,6 +20,12 @@ struct OnboardingView: View {
     @State private var scanProgress: Double = 0
     @State private var iconPulse: Bool = false
     @State private var checksStarted: Bool = false
+    // Gates the Screen Recording probe until the permission stage begins.
+    // Probing via SCShareableContent triggers the TCC dialog on first
+    // attempt — we delay that so the user first sees the System Check
+    // progress through the other items rather than being hit with the
+    // macOS permission prompt at launch.
+    @State private var permissionStageStarted: Bool = false
 
     // Step 2 (Verify) state
     @State private var verifyKnockCount: Int = 0
