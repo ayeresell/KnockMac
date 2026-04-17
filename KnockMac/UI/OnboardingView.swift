@@ -552,6 +552,21 @@ class OnboardingWindowManager {
         // while the settings wizard runs its own calibration reader on step 2.
         NotificationCenter.default.post(name: NSNotification.Name("OnboardingStarted"), object: nil)
         show(title: "KnockMac Settings", startAtStep: 0)
+        // If the user closes the settings window without clicking Finish,
+        // resume the main controller so knock detection doesn't stay disabled.
+        if let settingsWindow = window {
+            if let prior = settingsCloseObserver {
+                NotificationCenter.default.removeObserver(prior)
+            }
+            settingsCloseObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: settingsWindow,
+                queue: .main
+            ) { _ in
+                NotificationCenter.default.post(name: NSNotification.Name("OnboardingCompleted"), object: nil)
+                NSApp.setActivationPolicy(.accessory)
+            }
+        }
     }
 
     func closeWindow() {
