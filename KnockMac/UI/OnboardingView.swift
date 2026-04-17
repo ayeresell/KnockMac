@@ -285,8 +285,11 @@ struct OnboardingView: View {
     
     private func refreshScreenCaptureAccess() {
         Task {
-            let granted = await ScreenCapturePermission.probe()
-            await MainActor.run { hasScreenCapture = granted }
+            let status = await ScreenCapturePermission.currentStatus()
+            await MainActor.run {
+                needsCaptureRestart = (status == .restartRequired)
+                hasScreenCapture = (status == .granted)
+            }
         }
     }
 
