@@ -65,8 +65,8 @@ struct OnboardingView: View {
                                         .transition(.opacity)
                                 }
                             }
-                            .padding(16)
-                            .frame(width: 420)
+                            .padding(14)
+                            .frame(width: 380)
                             .background(
                                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                                     .fill(.regularMaterial)
