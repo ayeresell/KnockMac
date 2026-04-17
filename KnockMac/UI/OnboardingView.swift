@@ -275,10 +275,10 @@ struct OnboardingView: View {
     }
     
     private func refreshScreenCaptureAccess() {
-        Task {
-            let granted = await ScreenCapturePermission.probe()
-            await MainActor.run { hasScreenCapture = granted }
-        }
+        // Locked to the launch-time snapshot. Any change in System Settings
+        // requires "Quit & Reopen" to take effect — the System Check reflects
+        // the effective runtime permission, not the TCC checkbox state.
+        hasScreenCapture = ScreenCapturePermission.launchTimeGranted
     }
 
     private func runSystemCheck() {
