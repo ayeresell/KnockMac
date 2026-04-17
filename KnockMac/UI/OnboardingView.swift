@@ -275,7 +275,10 @@ struct OnboardingView: View {
     }
     
     private func refreshScreenCaptureAccess() {
-        hasScreenCapture = CGPreflightScreenCaptureAccess()
+        Task {
+            let granted = await ScreenCapturePermission.probe()
+            await MainActor.run { hasScreenCapture = granted }
+        }
     }
 
     private func runSystemCheck() {
@@ -385,9 +388,13 @@ struct OnboardingView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.60) {
             statusLine = "Verifying capture permissions…"
             setChecking(id: "permission")
-            // Resolve immediately based on current state.
-            refreshScreenCaptureAccess()
-            updateCheck(id: "permission", granted: hasScreenCapture)
+            Task {
+                let granted = await ScreenCapturePermission.probe()
+                await MainActor.run {
+                    hasScreenCapture = granted
+                    updateCheck(id: "permission", granted: granted)
+                }
+            }
         }
     }
 
@@ -405,9 +412,13 @@ struct OnboardingView: View {
             }
         }
         if id == "permission" {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                refreshScreenCaptureAccess()
-                updateCheck(id: "permission", granted: hasScreenCapture)
+            Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                let granted = await ScreenCapturePermission.probe()
+                await MainActor.run {
+                    hasScreenCapture = granted
+                    updateCheck(id: "permission", granted: granted)
+                }
             }
         }
     }

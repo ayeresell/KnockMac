@@ -24,6 +24,7 @@
 		D156A24D44CE2DF95B6AC25D /* ShapeAnalyzerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2E087AE43593971B3F456C /* ShapeAnalyzerTests.swift */; };
 		D1F595BB74719F42B2C953BF /* ScreenCaptureKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */; };
 		E087FD2C6A2E4C15D244BDC6 /* KnockMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA68A86045964D1FF5438353 /* KnockMacApp.swift */; };
+		E7E779B44D1EE4BAFB24365A /* ScreenCapturePermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4483C13338D8663F321A356B /* ScreenCapturePermission.swift */; };
 		F24F830E7EBC6A6395BAE7F3 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335D88182787E06CBE84A200 /* OnboardingView.swift */; };
 		F50B04CEF6E7A679CE3F2C1D /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFA5E01B737331DCF00B3989 /* IOKit.framework */; };
 		FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9308DC0110F85D3166526F13 /* KnockDetector.swift */; };
@@ -44,6 +45,7 @@
 		14150E502C3560D21F6F8FD9 /* KnockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockController.swift; sourceTree = "<group>"; };
 		2947F5853CBD4C713F2BAA33 /* CandidateTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTrackerTests.swift; sourceTree = "<group>"; };
 		335D88182787E06CBE84A200 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		4483C13338D8663F321A356B /* ScreenCapturePermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapturePermission.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
 		4C986281E97DD910952B446A /* CandidateTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTracker.swift; sourceTree = "<group>"; };
 		6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
@@ -105,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */,
+				4483C13338D8663F321A356B /* ScreenCapturePermission.swift */,
 				B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */,
 			);
 			path = Actions;
@@ -269,6 +272,7 @@
 				E087FD2C6A2E4C15D244BDC6 /* KnockMacApp.swift in Sources */,
 				B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */,
 				F24F830E7EBC6A6395BAE7F3 /* OnboardingView.swift in Sources */,
+				E7E779B44D1EE4BAFB24365A /* ScreenCapturePermission.swift in Sources */,
 				88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */,
 				C434BC3B6752F685B6AE1D65 /* ShapeAnalyzer.swift in Sources */,
 			);
