@@ -33,7 +33,7 @@ struct OnboardingView: View {
                 if step == 0 {
                     // Step 0: Animated System Check
                     VStack(spacing: 0) {
-                        VStack(spacing: 16) {
+                        VStack(spacing: 10) {
                             Image(systemName: "laptopcomputer.and.iphone")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
