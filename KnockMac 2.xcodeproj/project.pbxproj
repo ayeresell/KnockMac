@@ -17,7 +17,6 @@
 		88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */; };
 		A0767FF5FD79991E21BF7929 /* DoubleKnockMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C805401FDE7E3F8E9447C9 /* DoubleKnockMatcher.swift */; };
 		A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */; };
-		B1265EA1BAE7BE5415CF363F /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8D72CEDC8CD69AE5C47AECCC /* AppIcon.icns */; };
 		B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */; };
 		C434BC3B6752F685B6AE1D65 /* ShapeAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D73580E7B6CDFF33694DEBE /* ShapeAnalyzer.swift */; };
 		C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B61FC59407AED88DC86806D /* InputActivityGate.swift */; };
@@ -53,7 +52,6 @@
 		7098DD185D0005BCD5781516 /* KnockMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KnockMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		72F28255E26A4FEA48DF3AE6 /* KnockMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KnockMac.entitlements; sourceTree = "<group>"; };
 		74C805401FDE7E3F8E9447C9 /* DoubleKnockMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleKnockMatcher.swift; sourceTree = "<group>"; };
-		8D72CEDC8CD69AE5C47AECCC /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		9308DC0110F85D3166526F13 /* KnockDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockDetector.swift; sourceTree = "<group>"; };
 		9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveBaseline.swift; sourceTree = "<group>"; };
 		9D73580E7B6CDFF33694DEBE /* ShapeAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeAnalyzer.swift; sourceTree = "<group>"; };
@@ -118,7 +116,6 @@
 		A09FD0D21B60D360A73718EE /* KnockMac */ = {
 			isa = PBXGroup;
 			children = (
-				8D72CEDC8CD69AE5C47AECCC /* AppIcon.icns */,
 				14150E502C3560D21F6F8FD9 /* KnockController.swift */,
 				72F28255E26A4FEA48DF3AE6 /* KnockMac.entitlements */,
 				AA68A86045964D1FF5438353 /* KnockMacApp.swift */,
@@ -177,7 +174,6 @@
 			buildConfigurationList = 79A6131459C6C8F95F9BE01D /* Build configuration list for PBXNativeTarget "KnockMac" */;
 			buildPhases = (
 				4E3EAB7B610900189BCF8041 /* Sources */,
-				091DB64C33572EE6C84987AF /* Resources */,
 				50FCC0974699113E98FE0152 /* Frameworks */,
 			);
 			buildRules = (
@@ -247,17 +243,6 @@
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		091DB64C33572EE6C84987AF /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				B1265EA1BAE7BE5415CF363F /* AppIcon.icns in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		417796046392D611F9493F6B /* Sources */ = {

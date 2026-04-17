@@ -30,7 +30,7 @@ final class KnockDetector {
             k: 5.0,
             sigmaFloor: 0.003,
             sigmaCeiling: 0.03,
-            absoluteFloor: 0.030
+            absoluteFloor: 0.038
         )
         self.tracker = CandidateTracker()
         self.shape = ShapeAnalyzer(
@@ -39,12 +39,13 @@ final class KnockDetector {
             decayFraction: 0.5,
             minZDominance: 0.0,
             maxPreQuietDeviation: 0.020,
-            minPeakDeviation: 0.065
+            minPeakDeviation: 0.060,
+            minSignedDy: -0.002
         )
         self.matcher = DoubleKnockMatcher(minGap: 0.15, maxGap: 0.5, maxAmpRatio: 4.0)
 
         wire()
-        print("[Detector] v2 initialized — k=5.0 absFloor=0.030 attack≤20 minPeak=0.065g zDom=disabled ampRatio≤4.0 gap=[0.15,0.5]s gate=0.5s")
+        print("[Detector] v2 initialized — k=5.0 absFloor=0.038 attack≤20 minPeak=0.060g zDom=disabled sdy≥-0.002 ampRatio≤4.0 gap=[0.15,0.5]s gate=0.5s")
     }
 
     private func wire() {

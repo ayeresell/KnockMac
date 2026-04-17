@@ -12,19 +12,25 @@ final class ShapeAnalyzer {
     let minZDominance: Double
     let maxPreQuietDeviation: Double
     let minPeakDeviation: Double
+    // Minimum allowed signed Y-axis delta at peak. Trackpad taps near the palm rest
+    // consistently produce sdy ≤ -0.003g because the impact flexes the chassis in
+    // the opposite direction from a knock on the upper body/lid (data-driven).
+    let minSignedDy: Double
 
     init(maxAttackSamples: Int = 4,
          minDecaySamples: Int = 2,
          decayFraction: Double = 0.5,
          minZDominance: Double = 1.3,
          maxPreQuietDeviation: Double = 0.025,
-         minPeakDeviation: Double = 0.0) {
+         minPeakDeviation: Double = 0.0,
+         minSignedDy: Double = -.infinity) {
         self.maxAttackSamples = maxAttackSamples
         self.minDecaySamples = minDecaySamples
         self.decayFraction = decayFraction
         self.minZDominance = minZDominance
         self.maxPreQuietDeviation = maxPreQuietDeviation
         self.minPeakDeviation = minPeakDeviation
+        self.minSignedDy = minSignedDy
     }
 
     func classify(_ w: CandidateTracker.ImpulseWindow) -> Classification {
@@ -34,6 +40,17 @@ final class ShapeAnalyzer {
         }
         let peakSample = samples[w.peakIndex]
         let peakDeviation = abs(peakSample.magnitude - w.baseline)
+
+        // Per-axis signed displacement from rest, averaged over the first few
+        // pre-impulse samples. Stabler than sample-to-sample delta for weak taps.
+        let nRef = min(5, samples.count)
+        let refX = samples.prefix(nRef).map { $0.x }.reduce(0, +) / Double(nRef)
+        let refY = samples.prefix(nRef).map { $0.y }.reduce(0, +) / Double(nRef)
+        let refZ = samples.prefix(nRef).map { $0.z }.reduce(0, +) / Double(nRef)
+        let xOff = peakSample.x - refX
+        let yOff = peakSample.y - refY
+        let zOff = peakSample.z - refZ
+        print("[Shape.diag] peak=\(String(format: "%.3f", peakDeviation))g xOff=\(String(format: "%+.3f", xOff)) yOff=\(String(format: "%+.3f", yOff)) zOff=\(String(format: "%+.3f", zOff))")
 
         // 0. Minimum peak check — filters out chassis echoes from earlier impacts.
         if peakDeviation < minPeakDeviation {
@@ -97,6 +114,12 @@ final class ShapeAnalyzer {
         let maxLateral = max(dx, dy, 0.0001)
         if dz < minZDominance * maxLateral {
             return .reject(reason: "z_weak dz/xy=\(String(format: "%.2f", dz / maxLateral))")
+        }
+
+        // 6. Directional Y-axis check — trackpad-tap discriminator.
+        let sdy = peakSample.y - prev.y
+        if sdy < minSignedDy {
+            return .reject(reason: "trackpad_dir sdy=\(String(format: "%+.3f", sdy))")
         }
 
         return .accept(peak: peakDeviation)

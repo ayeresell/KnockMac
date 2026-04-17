@@ -27,6 +27,7 @@ targets:
         LSMinimumSystemVersion: "14.0"
         NSHumanReadableCopyright: "Copyright © 2025 KnockMac"
         NSScreenCaptureUsageDescription: "KnockMac needs screen recording access to take screenshots when you knock."
+        CFBundleIconFile: "AppIcon"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.knockmac.app
