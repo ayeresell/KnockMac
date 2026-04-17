@@ -94,6 +94,10 @@ struct OnboardingView: View {
                                 .transition(.opacity.combined(with: .scale))
                             } else if needsCaptureRestart {
                                 Button("Quit & Reopen") {
+                                    // After a TCC change, force the user back
+                                    // through calibration + verification so
+                                    // double-knock detection is re-validated.
+                                    hasCompletedOnboarding = false
                                     ScreenCapturePermission.relaunch()
                                 }
                                 .buttonStyle(.borderedProminent)
