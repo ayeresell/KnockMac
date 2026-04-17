@@ -338,6 +338,9 @@ struct OnboardingView: View {
             if id == "permission" && granted {
                 checks[idx].detail = "Access granted"
             }
+            if id == "permission" && !granted {
+                checks[idx].detail = needsCaptureRestart ? "Restart required" : "Permission required"
+            }
         }
         advanceStatusLineIfDone()
     }
