@@ -416,6 +416,10 @@ struct OnboardingView: View {
             statusLine = "Verifying capture permissions…"
             setChecking(id: "permission")
             permissionStageStarted = true
+            // Drop the onboarding window from .floating to .normal so the
+            // system TCC prompt surfaces above it. Restored to .floating
+            // in .onChange(of: hasScreenCapture) once access is granted.
+            NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
             Task {
                 let status = await ScreenCapturePermission.currentStatus()
                 await MainActor.run {
