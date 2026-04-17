@@ -574,9 +574,11 @@ class OnboardingWindowManager {
             window?.title = title
         }
 
-        // LSUIElement apps relaunched by TCC after a permission grant can come up
-        // in the background. Force activation + orderFrontRegardless, then retry on
-        // the next runloop in case another app reclaims focus right after us.
+        // LSUIElement apps relaunched after a TCC "Quit & Reopen" come up as
+        // a background accessory with no Dock tile — NSApp.activate then does
+        // nothing and the onboarding window stays hidden. Temporarily promote
+        // to .regular so the window can take focus; closeWindow() reverts.
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
         window?.orderFrontRegardless()
