@@ -539,6 +539,9 @@ class OnboardingWindowManager {
 
     func closeWindow() {
         window?.close()
+        // Return to accessory policy so the Dock icon disappears and the app
+        // behaves as a pure menu bar utility again.
+        NSApp.setActivationPolicy(.accessory)
     }
 
     private func show(title: String, startAtStep: Int = 0) {
