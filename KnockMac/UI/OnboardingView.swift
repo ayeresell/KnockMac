@@ -76,8 +76,8 @@ struct OnboardingView: View {
                                     .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
                             )
                         }
-                        .padding(.top, 26)
-                        .padding(.horizontal, 30)
+                        .padding(.top, 18)
+                        .padding(.horizontal, 24)
 
                         Spacer(minLength: 0)
 
