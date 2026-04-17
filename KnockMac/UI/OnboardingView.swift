@@ -97,7 +97,8 @@ struct OnboardingView: View {
                                     // After a TCC change, force the user back
                                     // through calibration + verification so
                                     // double-knock detection is re-validated.
-                                    hasCompletedOnboarding = false
+                                    UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+                                    UserDefaults.standard.synchronize()
                                     ScreenCapturePermission.relaunch()
                                 }
                                 .buttonStyle(.borderedProminent)
