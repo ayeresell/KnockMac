@@ -10,6 +10,7 @@ struct OnboardingView: View {
 
     // Step 0 (System Check) state
     @State private var hasScreenCapture = false
+    @State private var needsCaptureRestart = false
     @State private var hasAccelerometer = false
     @State private var sysCheckReader: AccelerometerReader?
 
