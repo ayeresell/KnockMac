@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>12</integer>
+	<key>logs</key>
+	<dict>
+		<key>A5AB0681-EF17-43F1-BF50-1364081E49DA</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>A5AB0681-EF17-43F1-BF50-1364081E49DA.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>KnockMac project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>KnockMac</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project KnockMac with scheme KnockMac and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>798153513.11042297</real>
+			<key>timeStoppedRecording</key>
+			<real>798153513.44582701</real>
+			<key>title</key>
+			<string>Cleaning project KnockMac with scheme KnockMac and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>A5AB0681-EF17-43F1-BF50-1364081E49DA</string>
+		</dict>
+		<key>CD482299-76EF-45BE-8BFC-D780EEBCAC97</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>CD482299-76EF-45BE-8BFC-D780EEBCAC97.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>E</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>1</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>5</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>KnockMac project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>KnockMac</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project KnockMac with scheme KnockMac and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>798153513.44850194</real>
+			<key>timeStoppedRecording</key>
+			<real>798153524.32867396</real>
+			<key>title</key>
+			<string>Building project KnockMac with scheme KnockMac and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>CD482299-76EF-45BE-8BFC-D780EEBCAC97</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

@@ -30,7 +30,7 @@ if [[ ! -d "$APP_PATH" ]]; then
 fi
 
 echo "→ Signing app with hardened runtime"
-find "$APP_PATH" -exec xattr -c {} \; 2>/dev/null || true
+xattr -cr "$APP_PATH"
 /usr/bin/codesign --force --deep --sign - --options=runtime \
     --entitlements "$ENTITLEMENTS" --timestamp=none --generate-entitlement-der \
     "$APP_PATH"
