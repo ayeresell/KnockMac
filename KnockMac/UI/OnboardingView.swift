@@ -496,7 +496,6 @@ class OnboardingWindowManager {
     private func show(title: String, startAtStep: Int = 0) {
         if window == nil {
             let hostingController = NSHostingController(rootView: OnboardingView(startAtStep: startAtStep))
-            hostingController.sizingOptions = [.preferredContentSize]
             let newWindow = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 520, height: 540),
                 styleMask: [.titled, .closable, .fullSizeContentView],
