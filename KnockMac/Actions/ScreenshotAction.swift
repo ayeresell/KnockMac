@@ -86,8 +86,7 @@ enum ScreenshotAction {
         do {
             try data.write(to: url)
             print("[Screenshot] Saved to \(url.lastPathComponent)")
-            // Play system camera shutter sound
-            AudioServicesPlaySystemSound(1108)
+            AudioServicesPlaySystemSound(grabSoundID)
         } catch {
             print("[Screenshot] Save failed: \(error)")
         }
