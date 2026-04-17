@@ -275,7 +275,10 @@ struct OnboardingView: View {
     }
     
     private func refreshScreenCaptureAccess() {
-        hasScreenCapture = CGPreflightScreenCaptureAccess()
+        Task {
+            let granted = await ScreenCapturePermission.probe()
+            await MainActor.run { hasScreenCapture = granted }
+        }
     }
 
     private func runSystemCheck() {
