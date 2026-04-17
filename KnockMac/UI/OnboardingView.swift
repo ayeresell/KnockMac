@@ -299,7 +299,7 @@ struct OnboardingView: View {
         Task {
             let status = await ScreenCapturePermission.currentStatus()
             await MainActor.run {
-                needsCaptureRestart = (status == .restartRequired)
+                applyCaptureStatus(status)
                 hasScreenCapture = (status == .granted)
             }
         }
@@ -423,7 +423,7 @@ struct OnboardingView: View {
             Task {
                 let status = await ScreenCapturePermission.currentStatus()
                 await MainActor.run {
-                    needsCaptureRestart = (status == .restartRequired)
+                    applyCaptureStatus(status)
                     hasScreenCapture = (status == .granted)
                     updateCheck(id: "permission", granted: status == .granted)
                 }
@@ -449,7 +449,7 @@ struct OnboardingView: View {
                 try? await Task.sleep(nanoseconds: 300_000_000)
                 let status = await ScreenCapturePermission.currentStatus()
                 await MainActor.run {
-                    needsCaptureRestart = (status == .restartRequired)
+                    applyCaptureStatus(status)
                     hasScreenCapture = (status == .granted)
                     updateCheck(id: "permission", granted: status == .granted)
                 }
