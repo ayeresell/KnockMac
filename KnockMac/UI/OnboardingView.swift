@@ -536,7 +536,8 @@ struct OnboardingView: View {
 class OnboardingWindowManager {
     static let shared = OnboardingWindowManager()
     private var window: NSWindow?
-    
+    private var settingsCloseObserver: NSObjectProtocol?
+
     func showIfNeeded() {
         guard !KnockController.hasRequiredPermissions() else { return }
         show(title: "KnockMac Setup")
