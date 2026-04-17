@@ -412,9 +412,13 @@ struct OnboardingView: View {
             }
         }
         if id == "permission" {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                refreshScreenCaptureAccess()
-                updateCheck(id: "permission", granted: hasScreenCapture)
+            Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                let granted = await ScreenCapturePermission.probe()
+                await MainActor.run {
+                    hasScreenCapture = granted
+                    updateCheck(id: "permission", granted: granted)
+                }
             }
         }
     }
