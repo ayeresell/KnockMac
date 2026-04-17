@@ -5,6 +5,9 @@ struct KnockMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = KnockController()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    // Separate key so macOS's two-way write-back through MenuBarExtra never
+    // clobbers the onboarding flag (which would make Quit & Reopen skip onboarding).
+    @AppStorage("menuBarInserted") private var menuBarInserted = true
 
     init() {
         // Reset onboarding only when launched with --reset-onboarding argument.
@@ -17,7 +20,7 @@ struct KnockMacApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("KnockMac", systemImage: appState.isActive ? "hand.tap.fill" : "hand.tap", isInserted: $hasCompletedOnboarding) {
+        MenuBarExtra("KnockMac", systemImage: appState.isActive ? "hand.tap.fill" : "hand.tap", isInserted: $menuBarInserted) {
             MenuBarView(appState: appState)
         }
 
