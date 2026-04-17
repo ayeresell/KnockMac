@@ -303,6 +303,13 @@ struct OnboardingView: View {
         checks.contains(where: { $0.id == "permission" && $0.status == .failed })
     }
 
+    private var windowHeight: CGFloat {
+        if step == 0 && !(allChecksPassed || hasPermissionFailure) {
+            return 420
+        }
+        return 540
+    }
+
     private func requestScreenRecordingAccess() {
         NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
         // Registers the bundle in TCC so it appears in the Screen Recording list.
