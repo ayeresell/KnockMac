@@ -305,6 +305,19 @@ struct OnboardingView: View {
         }
     }
 
+    // When the TCC entry changes mid-session we need the user back in the
+    // wizard no matter how the restart happens (our own button or macOS's
+    // "Quit & Reopen" prompt). Persisting hasCompletedOnboarding=false
+    // immediately ensures showIfNeeded() re-presents onboarding on relaunch.
+    private func applyCaptureStatus(_ status: ScreenCapturePermission.Status) {
+        let restart = (status == .restartRequired)
+        needsCaptureRestart = restart
+        if restart {
+            UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+            UserDefaults.standard.synchronize()
+        }
+    }
+
     private func runSystemCheck() {
         guard !hasAccelerometer else { return }
         sysCheckReader = AccelerometerReader()
