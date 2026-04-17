@@ -261,7 +261,8 @@ struct OnboardingView: View {
                 }
             }
         }
-        .frame(width: 520, height: 540)
+        .frame(width: 520, height: windowHeight)
+        .animation(.easeInOut(duration: 0.45), value: windowHeight)
         .background(.thickMaterial)
         .onAppear {
             if startAtStep > 0 {
