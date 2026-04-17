@@ -92,6 +92,14 @@ struct OnboardingView: View {
                                 .controlSize(.large)
                                 .buttonBorderShape(.capsule)
                                 .transition(.opacity.combined(with: .scale))
+                            } else if needsCaptureRestart {
+                                Button("Quit & Reopen") {
+                                    ScreenCapturePermission.relaunch()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.large)
+                                .buttonBorderShape(.capsule)
+                                .transition(.opacity.combined(with: .scale))
                             } else if hasPermissionFailure {
                                 Button("Open System Settings") {
                                     requestScreenRecordingAccess()
