@@ -140,10 +140,15 @@ final class AccelerometerReader {
             return
         }
         let reportSize = IOHIDDeviceGetProperty(dev, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? 0
-        print("[Accel] Device opened — reportSize=\(reportSize)b")
-        // macOS 26+: IMU no longer auto-streams input reports after open. Explicitly
-        // request the device's native 8ms interval (125 Hz) to kick the SPU pipeline on.
-        IOHIDDeviceSetProperty(dev, kIOHIDReportIntervalKey as CFString, 8000 as CFNumber)
+        let usagePage = IOHIDDeviceGetProperty(dev, kIOHIDPrimaryUsagePageKey as CFString) as? Int ?? 0
+        let usage = IOHIDDeviceGetProperty(dev, kIOHIDPrimaryUsageKey as CFString) as? Int ?? 0
+        print("[Accel] Device opened — reportSize=\(reportSize)b usagePage=0x\(String(usagePage, radix: 16)) usage=0x\(String(usage, radix: 16))")
+
+        let currentInterval = IOHIDDeviceGetProperty(dev, kIOHIDReportIntervalKey as CFString) as? Int
+        let setResult = IOHIDDeviceSetProperty(dev, kIOHIDReportIntervalKey as CFString, 8000 as CFNumber)
+        let newInterval = IOHIDDeviceGetProperty(dev, kIOHIDReportIntervalKey as CFString) as? Int
+        print("[Accel] ReportInterval before=\(currentInterval ?? -1) setOK=\(setResult) after=\(newInterval ?? -1)")
+
         IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
 
         // Retain self for the C callback lifetime.
@@ -153,15 +158,28 @@ final class AccelerometerReader {
 
         IOHIDDeviceRegisterInputReportCallback(
             dev, reportBufferPtr, CFIndex(reportBufferSize),
-            { ctx, _, _, _, _, report, length in
-                guard let ctx, length >= 18 else { return }
-                // Callback fires on the main run loop — safe to assume MainActor.
+            { ctx, result, _, _, _, report, length in
+                guard let ctx else { return }
                 let reader = Unmanaged<AccelerometerReader>.fromOpaque(ctx).takeUnretainedValue()
                 MainActor.assumeIsolated {
+                    reader.diagnosticReportTick(result: result, length: length)
+                    guard length >= 18 else { return }
                     reader.handleReport(report, length: length)
                 }
             },
             retained.toOpaque()
+        )
+
+        // Secondary path: element-level value callback. If raw input reports are
+        // filtered but parsed elements still arrive, this will fire.
+        IOHIDDeviceRegisterInputValueCallback(
+            dev,
+            { _, _, _, _ in
+                MainActor.assumeIsolated {
+                    AccelerometerReader.logInputValueOnce()
+                }
+            },
+            nil
         )
 
         device = dev
