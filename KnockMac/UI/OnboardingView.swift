@@ -915,7 +915,7 @@ class OnboardingWindowManager {
         show(title: "KnockMac Setup")
     }
 
-    func showSettings() {
+    func showSettings(startAtStep: Int = 0) {
         // Close and discard existing window so a fresh OnboardingView is created.
         window?.close()
         window = nil
@@ -923,7 +923,7 @@ class OnboardingWindowManager {
         // Pause the main KnockController so its detector doesn't fire screenshots
         // while the settings wizard runs its own calibration reader on step 2.
         NotificationCenter.default.post(name: NSNotification.Name("OnboardingStarted"), object: nil)
-        show(title: "KnockMac Settings", startAtStep: 0)
+        show(title: "KnockMac Settings", startAtStep: startAtStep)
         // If the user closes the settings window without clicking Finish,
         // resume the main controller so knock detection doesn't stay disabled.
         if let settingsWindow = window {
