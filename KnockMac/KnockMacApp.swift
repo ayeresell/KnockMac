@@ -33,6 +33,9 @@ struct KnockMacApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Snapshot TCC state now, before onboarding can lazily freeze it.
+        ScreenCapturePermission.captureLaunchState()
+
         // Terminate all other running instances, keep only this one.
         let current = NSRunningApplication.current
         NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")

@@ -1,6 +1,176 @@
 import SwiftUI
 import AudioToolbox
 import CoreGraphics
+import AppKit
+
+// MARK: - Design tokens
+
+private enum KM {
+    static let accent       = Color(red: 10/255,  green: 132/255, blue: 255/255)
+    static let success      = Color(red: 48/255,  green: 209/255, blue: 88/255)
+    static let errorRed     = Color(red: 255/255, green: 69/255,  blue: 58/255)
+    static let primary      = Color(red: 242/255, green: 242/255, blue: 247/255)
+    static let terminalBg   = Color(red: 24/255,  green: 24/255,  blue: 28/255)
+
+    // Terminal palette — tag tokens tinted per type, meta gets a slight teal
+    // so numeric/keyword values pop against the muted label text.
+    static let tagProbe     = Color(red: 254/255, green: 188/255, blue: 46/255)            // amber
+    static let tagCheck     = Color(red: 255/255, green: 159/255, blue: 10/255)            // orange
+    static let tagReady     = Color(red: 91/255,  green: 235/255, blue: 173/255)           // seafoam
+    static let metaTint     = Color(red: 158/255, green: 220/255, blue: 224/255).opacity(0.72)
+    static let caret        = Color(red: 254/255, green: 188/255, blue: 46/255).opacity(0.90)
+
+    static func muted(_ opacity: Double) -> Color {
+        Color(red: 235/255, green: 235/255, blue: 245/255).opacity(opacity)
+    }
+
+    static let mono11       = Font.system(size: 11, design: .monospaced)
+    static let mono10       = Font.system(size: 10, design: .monospaced)
+    static let mono13Semi   = Font.system(size: 13, weight: .semibold, design: .monospaced)
+    static let mono32Bold   = Font.system(size: 32, weight: .bold, design: .monospaced)
+
+    static func tagColor(_ tag: TerminalTag) -> Color {
+        switch tag {
+        case .probe: return tagProbe
+        case .check: return tagCheck
+        case .ready: return tagReady
+        }
+    }
+}
+
+// MARK: - Terminal model
+
+enum TerminalTag: String { case probe, check, ready }
+
+enum RowStatus: Equatable { case pending, scanning, ok, err }
+
+struct TerminalRow: Identifiable, Equatable {
+    let id: String
+    let tag: TerminalTag
+    let label: String
+    var meta: String? = nil
+    var status: RowStatus = .pending
+    var visible: Bool = false
+    var typed: Int = 0  // Phase A char count: idx (2) + tag (7) + label.count
+
+    // Chars that get typed in Phase A — just the identity columns.
+    var phaseAChars: Int { 2 + 7 + label.count }
+    var phaseADone: Bool { typed >= phaseAChars }
+
+    var statusText: String {
+        switch status {
+        case .ok:   return "OK"
+        case .err:  return "ERR"
+        default:    return ""
+        }
+    }
+
+    // Grows once status resolves, so typed can advance past phaseAChars and
+    // type meta + status one char at a time.
+    var fullChars: Int { phaseAChars + (meta ?? "").count + statusText.count }
+
+    static func initial() -> [TerminalRow] {
+        [
+            TerminalRow(id: "os",       tag: .probe, label: "Operating System"),
+            TerminalRow(id: "cpu",      tag: .probe, label: "Processor"),
+            TerminalRow(id: "mem",      tag: .probe, label: "Memory"),
+            TerminalRow(id: "accel",    tag: .probe, label: "SMC accelerometer"),
+            TerminalRow(id: "screen",   tag: .probe, label: "Screen recording"),
+            TerminalRow(id: "disk",     tag: .probe, label: "Disk: ~/Desktop"),
+            TerminalRow(id: "listener", tag: .ready, label: "Double-knock listener"),
+        ]
+    }
+}
+
+// MARK: - Terminal row view
+
+struct TerminalRowView: View {
+    let row: TerminalRow
+    let index: Int
+
+    var body: some View {
+        let typed = row.typed
+
+        // Phase A columns
+        let idxText   = String(format: "%02d", index)
+        let tagText   = "[\(row.tag.rawValue)]"
+        let labelText = row.label
+
+        let idxShown   = String(idxText.prefix(max(0, min(2, typed))))
+        let tagShown   = String(tagText.prefix(max(0, min(7, typed - 2))))
+        let labelShown = String(labelText.prefix(max(0, typed - 9)))
+
+        // Phase B columns — meta then status, typed char-by-char.
+        let pastPhaseA = max(0, typed - row.phaseAChars)
+        let metaText   = row.meta ?? ""
+        let metaShown  = String(metaText.prefix(min(metaText.count, pastPhaseA)))
+
+        let pastMeta    = max(0, pastPhaseA - metaText.count)
+        let statusFull  = row.statusText
+        let statusShown = String(statusFull.prefix(min(statusFull.count, pastMeta)))
+
+        let statusColor: Color = {
+            switch row.status {
+            case .ok:  return KM.success
+            case .err: return KM.errorRed
+            default:   return KM.muted(0.30)
+            }
+        }()
+
+        return HStack(spacing: 10) {
+            Text(idxShown)
+                .foregroundColor(KM.muted(0.35))
+                .frame(width: 18, alignment: .leading)
+
+            Text(tagShown)
+                .foregroundColor(KM.tagColor(row.tag))
+                .frame(width: 52, alignment: .leading)
+
+            Text(labelShown)
+                .foregroundColor(KM.primary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(metaShown)
+                .foregroundColor(KM.metaTint)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            Group {
+                if row.phaseADone && (row.status == .scanning || row.status == .pending) {
+                    ScanningDotsView()
+                } else {
+                    Text(statusShown)
+                        .foregroundColor(statusColor)
+                        .fontWeight(.semibold)
+                }
+            }
+            .frame(width: 30, alignment: .trailing)
+        }
+        .font(KM.mono11)
+        .frame(height: 19)
+    }
+}
+
+struct ScanningDotsView: View {
+    @State private var phase = 0
+    var body: some View {
+        Text(phase == 0 ? "··" : phase == 1 ? " ·" : "· ")
+            .foregroundColor(KM.muted(0.30))
+            .onReceive(Timer.publish(every: 0.35, on: .main, in: .common).autoconnect()) { _ in
+                phase = (phase + 1) % 3
+            }
+    }
+}
+
+// Reference-type buffer so the off-main HID callback can accumulate
+// smoothed live-G without triggering a @State write per 100Hz sample.
+private final class LiveGBuffer {
+    var value: Double = 0.03
+    var skip: Int = 0
+}
+
+// MARK: - OnboardingView
 
 struct OnboardingView: View {
     var startAtStep: Int = 0
@@ -8,293 +178,405 @@ struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var step = 0
 
-    // Step 0 (System Check) state
+    // Step 0 (System Check)
     @State private var hasScreenCapture = false
     @State private var needsCaptureRestart = false
     @State private var hasAccelerometer = false
     @State private var sysCheckReader: AccelerometerReader?
+    @State private var rows: [TerminalRow] = TerminalRow.initial()
+    @State private var checksStarted = false
+    @State private var permissionStageStarted = false
+    @State private var caretOn = true
+    @State private var typingHead: Int = 0
+    @State private var promptTyped: Int = 0
+    @State private var screenProbeFired: Bool = false
 
-    // Animated system check
-    @State private var checks: [SystemCheck] = SystemCheck.initial()
-    @State private var statusLine: String = "Initializing diagnostics…"
-    @State private var scanProgress: Double = 0
-    @State private var iconPulse: Bool = false
-    @State private var checksStarted: Bool = false
-    // Gates the Screen Recording probe until the permission stage begins.
-    // Probing via SCShareableContent triggers the TCC dialog on first
-    // attempt — we delay that so the user first sees the System Check
-    // progress through the other items rather than being hit with the
-    // macOS permission prompt at launch.
-    @State private var permissionStageStarted: Bool = false
-
-    // Step 2 (Verify) state
+    // Step 2 (Test it out)
     @State private var verifyKnockCount: Int = 0
-    
-    // Local knock detector just for calibration
+    @State private var liveG: Double = 0.03
     @State private var calibrationReader: AccelerometerReader?
     @State private var calibrationDetector: KnockDetector?
+    @State private var calibrationStarted = false
+    @State private var liveGBuffer = LiveGBuffer()
 
     var body: some View {
-        VStack {
-            Group {
-                if step == 0 {
-                    // Step 0: Animated System Check
-                    VStack(spacing: 0) {
-                        VStack(spacing: 10) {
-                            Image(systemName: "laptopcomputer.and.iphone")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 72, height: 72)
-                                .foregroundColor(.blue)
-                                .scaleEffect(iconPulse ? 1.05 : 1.0)
-                                .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: iconPulse)
-
-                            Text("System Check")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-
-                            HStack(spacing: 6) {
-                                if !allChecksFinished {
-                                    ProgressView().scaleEffect(0.55)
-                                } else if allChecksPassed {
-                                    Image(systemName: "checkmark.seal.fill").foregroundColor(.green)
-                                }
-                                Text(statusLine)
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                    .animation(.easeOut(duration: 0.2), value: statusLine)
-                            }
-                            .frame(height: 20)
-
-                            VStack(spacing: 10) {
-                                ForEach(checks.indices, id: \.self) { idx in
-                                    SystemCheckRow(check: checks[idx])
-                                        .transition(.opacity)
-                                }
-                            }
-                            .padding(14)
-                            .frame(width: 380)
-                            .background(
-                                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                    .fill(.regularMaterial)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                        }
-                        .padding(.top, 18)
-                        .padding(.horizontal, 24)
-
-                        Spacer(minLength: 0)
-
-                        // Button auto-centers between card and window bottom via flexible spacers.
-                        Group {
-                            if allChecksPassed {
-                                Button("Continue") {
-                                    withAnimation { step = 1 }
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
-                                .buttonBorderShape(.capsule)
-                                .transition(.opacity.combined(with: .scale))
-                            } else if needsCaptureRestart {
-                                Button("Quit & Reopen") {
-                                    // After a TCC change, force the user back
-                                    // through calibration + verification so
-                                    // double-knock detection is re-validated.
-                                    UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
-                                    UserDefaults.standard.synchronize()
-                                    ScreenCapturePermission.relaunch()
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
-                                .buttonBorderShape(.capsule)
-                                .transition(.opacity.combined(with: .scale))
-                            } else if hasPermissionFailure {
-                                Button("Open System Settings") {
-                                    requestScreenRecordingAccess()
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
-                                .buttonBorderShape(.capsule)
-                                .transition(.opacity.combined(with: .scale))
-                            }
-                        }
-
-                        Spacer(minLength: 0)
-                    }
-                    .transition(.opacity)
-                    .onAppear {
-                        iconPulse = true
-                        if !checksStarted {
-                            checksStarted = true
-                            runSystemCheck()
-                            runAnimatedDiagnostic()
-                        }
-                    }
-                    .onReceive(Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()) { _ in
-                        if permissionStageStarted && !hasScreenCapture {
-                            refreshScreenCaptureAccess()
-                        }
-                    }
-                    .onChange(of: hasScreenCapture) { _, granted in
-                        updateCheck(id: "permission", granted: granted)
-                        if granted {
-                            NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .floating
-                        }
-                    }
-                    .onChange(of: hasAccelerometer) { _, ok in
-                        updateCheck(id: "sensor", granted: ok)
-                    }
-                } else if step == 1 {
-                    // Step 1: Explanation
-                    VStack(spacing: 20) {
-                        Text("Where to knock")
-                            .font(.title)
-                            .fontWeight(.bold)
-                        
-                        // Stylized MacBook drawing with highlight
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(nsColor: .windowBackgroundColor))
-                                .frame(width: 300, height: 200)
-                                .shadow(radius: 5)
-                            
-                            // Keyboard area
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 260, height: 90)
-                                .offset(y: -10)
-                            
-                            // Trackpad area
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 100, height: 60)
-                                .offset(y: 70)
-                            
-                            // Touch Bar area
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.blue.opacity(0.5))
-                                .frame(width: 260, height: 24)
-                                .offset(y: -75)
-                                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.blue, lineWidth: 2).offset(y: -75))
-                                .overlay(Text("Tap Here").font(.caption2).bold().foregroundColor(.blue).offset(y: -75))
-                        }
-                        .padding(.vertical, 10)
-                        
-                        Text("Firmly double-knock between the screen and the keyboard (where the Touch Bar would be).\nIt works elsewhere too, but the sensor is most sensitive there.")
-                            .font(.body)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        
-                        Spacer()
-                        
-                        Button("Next") {
-                            withAnimation { step = 2 }
-                            startVerificationCalibration()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .buttonBorderShape(.capsule)
-                    }
-                    .padding(.top, 30)
-                    .padding(.horizontal, 30)
-                    .padding(.bottom, 30)
-                    .transition(.opacity)
-                } else if step == 2 {
-                    // Step 2: Verify
-                    VStack(spacing: 20) {
-                        Text("Step 2: Test it out")
-                            .font(.title)
-                            .fontWeight(.bold)
-
-                        Text("Double-knock 3 times to confirm\nyour settings work.")
-                            .font(.headline)
-                            .multilineTextAlignment(.center)
-
-                        Spacer()
-
-                        // Progress dots
-                        HStack(spacing: 16) {
-                            ForEach(0..<3) { i in
-                                Circle()
-                                    .fill(verifyKnockCount > i ? Color.green : Color.secondary.opacity(0.2))
-                                    .frame(width: 22, height: 22)
-                                    .overlay(
-                                        Image(systemName: "checkmark")
-                                            .font(.caption.bold())
-                                            .foregroundColor(.white)
-                                            .opacity(verifyKnockCount > i ? 1 : 0)
-                                    )
-                                    .animation(.easeOut(duration: 0.25), value: verifyKnockCount)
-                            }
-                        }
-
-                        ZStack {
-                            Circle()
-                                .fill(verifyKnockCount >= 3 ? Color.green.opacity(0.25) : Color.secondary.opacity(0.08))
-                                .frame(width: 90, height: 90)
-                                .animation(.easeOut(duration: 0.35), value: verifyKnockCount)
-                            Image(systemName: verifyKnockCount >= 3 ? "checkmark" : "hand.tap.fill")
-                                .font(.system(size: 38))
-                                .foregroundColor(verifyKnockCount >= 3 ? .green : .secondary)
-                                .animation(.easeOut(duration: 0.35), value: verifyKnockCount)
-                        }
-
-                        if verifyKnockCount >= 3 {
-                            Text("All done!")
-                                .font(.headline)
-                                .foregroundColor(.green)
-                        } else {
-                            Text("Knock \(verifyKnockCount + 1) of 3…")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-
-                        Spacer()
-
-                        HStack {
-                            Button("Back") {
-                                verifyKnockCount = 0
-                                withAnimation { step = 1 }
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.large)
-                            .buttonBorderShape(.capsule)
-
-                            Spacer()
-
-                            Button("Finish") {
-                                finishOnboarding()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
-                            .buttonBorderShape(.capsule)
-                            .disabled(verifyKnockCount < 3)
-                        }
-                    }
-                    .padding(.top, 30)
-                    .padding(.horizontal, 30)
-                    .padding(.bottom, 30)
-                    .transition(.opacity)
-                }
+        VStack(spacing: 0) {
+            if step == 0 {
+                systemCheckScreen
+            } else if step == 1 {
+                whereToKnockScreen
+            } else if step == 2 {
+                testItOutScreen
             }
         }
         .frame(width: 460, height: 480)
         .background(.thickMaterial)
+        .preferredColorScheme(.dark)
         .onAppear {
-            if startAtStep > 0 {
-                step = startAtStep
-            }
+            if startAtStep > 0 { step = startAtStep }
         }
         .onDisappear {
             stopCalibration()
             sysCheckReader?.stop()
         }
     }
-    
+
+    // MARK: Step 0 — System Check
+
+    private var systemCheckScreen: some View {
+        VStack(spacing: 16) {
+            VStack(spacing: 6) {
+                Text("System Check")
+                    .font(.system(size: 28, weight: .bold))
+                    .tracking(-0.5)
+                    .foregroundColor(KM.primary)
+
+                Text("Live diagnostic. Each line is re-verified every launch.")
+                    .font(.system(size: 13))
+                    .foregroundColor(KM.muted(0.60))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 8)
+
+            terminalPanel
+                .frame(maxHeight: .infinity)
+
+            terminalFooter
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
+        .padding(.bottom, 20)
+        .transition(.opacity)
+        .onAppear {
+            if !checksStarted {
+                checksStarted = true
+                runSystemCheck()
+                runAnimatedDiagnostic()
+                if !rows.isEmpty {
+                    rows[0].visible = true
+                    if rows[0].status == .pending { rows[0].status = .scanning }
+                }
+            }
+        }
+        .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
+            caretOn.toggle()
+        }
+        .onReceive(Timer.publish(every: 0.035, on: .main, in: .common).autoconnect()) { _ in
+            advanceTyping()
+        }
+        .onReceive(Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()) { _ in
+            if permissionStageStarted && !hasScreenCapture {
+                refreshScreenCaptureAccess()
+            }
+        }
+        .onChange(of: hasScreenCapture) { _, granted in
+            let meta = granted
+                ? "granted"
+                : (needsCaptureRestart ? "restart required" : "permission required")
+            updateRow(id: "screen", granted: granted, meta: meta)
+            if granted {
+                NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .floating
+            }
+        }
+        .onChange(of: hasAccelerometer) { _, ok in
+            updateRow(id: "accel", granted: ok, meta: ok ? "@ 100 Hz" : "not found")
+        }
+    }
+
+    private var terminalPanel: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(Array(rows.enumerated()), id: \.element.id) { idx, row in
+                TerminalRowView(row: row, index: idx + 1)
+                    .opacity(row.visible ? 1 : 0)
+            }
+
+            HStack(spacing: 10) {
+                Text("—")
+                    .foregroundColor(KM.muted(0.40))
+                    .frame(width: 18, alignment: .leading)
+                HStack(spacing: 4) {
+                    Text(String(promptMessage.prefix(promptTyped)))
+                        .foregroundColor(KM.muted(0.55))
+                    Rectangle()
+                        .fill(KM.caret)
+                        .frame(width: 7, height: 12)
+                        .opacity(caretOn ? 1 : 0)
+                }
+                Spacer()
+            }
+            .font(KM.mono11)
+            .frame(height: 19)
+            .padding(.top, 6)
+            .opacity(allResolved ? 1 : 0)
+        }
+        .padding(EdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(KM.terminalBg)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Color.white.opacity(0.08), lineWidth: 0.5)
+        )
+    }
+
+    private var terminalFooter: some View {
+        HStack {
+            Button(action: copyLog) {
+                Text("Copy log")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(KM.muted(0.75))
+                    .padding(.vertical, 6)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            if allFullyTyped {
+                if allPassed {
+                    Button("Continue") {
+                        withAnimation { step = 1 }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .buttonBorderShape(.capsule)
+                    .transition(.opacity.combined(with: .scale))
+                } else if needsCaptureRestart {
+                    Button("Quit & Reopen") {
+                        UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+                        UserDefaults.standard.synchronize()
+                        ScreenCapturePermission.relaunch()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .buttonBorderShape(.capsule)
+                    .transition(.opacity.combined(with: .scale))
+                } else if hasPermissionFailure {
+                    Button("Open System Settings") {
+                        requestScreenRecordingAccess()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .buttonBorderShape(.capsule)
+                    .transition(.opacity.combined(with: .scale))
+                }
+            }
+        }
+    }
+
+    // MARK: Step 1 — Where to knock (unchanged)
+
+    private var whereToKnockScreen: some View {
+        VStack(spacing: 20) {
+            Text("Where to knock")
+                .font(.title)
+                .fontWeight(.bold)
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(nsColor: .windowBackgroundColor))
+                    .frame(width: 300, height: 200)
+                    .shadow(radius: 5)
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 260, height: 90)
+                    .offset(y: -10)
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 100, height: 60)
+                    .offset(y: 70)
+
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.blue.opacity(0.5))
+                    .frame(width: 260, height: 24)
+                    .offset(y: -75)
+                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.blue, lineWidth: 2).offset(y: -75))
+                    .overlay(Text("Tap Here").font(.caption2).bold().foregroundColor(.blue).offset(y: -75))
+            }
+            .padding(.vertical, 10)
+
+            Text("Firmly double-knock between the screen and the keyboard (where the Touch Bar would be).\nIt works elsewhere too, but the sensor is most sensitive there.")
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
+
+            Button("Next") {
+                withAnimation { step = 2 }
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .buttonBorderShape(.capsule)
+        }
+        .padding(.top, 30)
+        .padding(.horizontal, 30)
+        .padding(.bottom, 30)
+        .transition(.opacity)
+    }
+
+    // MARK: Step 2 — Test it out
+
+    private var testItOutScreen: some View {
+        VStack(spacing: 14) {
+            VStack(spacing: 6) {
+                Text("Test it out")
+                    .font(.system(size: 28, weight: .bold))
+                    .tracking(-0.5)
+                    .foregroundColor(KM.primary)
+                Text("Three knocks. Each fills one ring.")
+                    .font(.system(size: 13))
+                    .foregroundColor(KM.muted(0.60))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 8)
+
+            Spacer(minLength: 0)
+
+            ringStack
+
+            Spacer(minLength: 0)
+
+            chipsRow
+
+            HStack {
+                Button("Back") {
+                    verifyKnockCount = 0
+                    stopCalibration()
+                    calibrationStarted = false
+                    withAnimation { step = 1 }
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(KM.muted(0.75))
+                .font(.system(size: 13, weight: .semibold))
+                .padding(.vertical, 6)
+
+                Spacer()
+
+                Button(verifyKnockCount >= 3 ? "Finish" : "Waiting…") {
+                    finishOnboarding()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .buttonBorderShape(.capsule)
+                .disabled(verifyKnockCount < 3)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
+        .padding(.bottom, 20)
+        .transition(.opacity)
+        .onAppear {
+            if !calibrationStarted {
+                calibrationStarted = true
+                startVerificationCalibration()
+            }
+        }
+    }
+
+    private var ringStack: some View {
+        let size: CGFloat = 172
+        let stroke: CGFloat = 7
+        let radii: [CGFloat] = [73, 59, 45]
+        let done = verifyKnockCount >= 3
+
+        return ZStack {
+            ForEach(radii.indices, id: \.self) { i in
+                let radius = radii[i]
+                let filled = verifyKnockCount > i
+
+                Circle()
+                    .stroke(Color.white.opacity(0.07), lineWidth: stroke)
+                    .frame(width: radius * 2, height: radius * 2)
+
+                Circle()
+                    .trim(from: 0, to: filled ? 1 : 0)
+                    .stroke(
+                        done ? KM.success : KM.accent,
+                        style: StrokeStyle(lineWidth: stroke, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: radius * 2, height: radius * 2)
+                    .animation(.easeOut(duration: 0.26), value: verifyKnockCount)
+            }
+
+            VStack(spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    Text("\(verifyKnockCount)")
+                        .font(KM.mono32Bold)
+                        .foregroundColor(done ? KM.success : KM.primary)
+                    Text("/3")
+                        .font(KM.mono32Bold)
+                        .foregroundColor(KM.muted(0.30))
+                }
+                Text(String(format: "%.3f g", liveG))
+                    .font(KM.mono10)
+                    .tracking(0.5)
+                    .foregroundColor(KM.muted(0.50))
+                    .padding(.top, 2)
+            }
+        }
+        .frame(width: size, height: size)
+    }
+
+    private var chipsRow: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<3) { i in
+                let detected = verifyKnockCount > i
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("KNOCK \(i + 1)")
+                        .font(KM.mono10)
+                        .tracking(0.5)
+                        .foregroundColor(KM.muted(0.45))
+                    Text(detected ? "● detected" : "○ waiting")
+                        .font(KM.mono13Semi)
+                        .foregroundColor(detected ? KM.accent : KM.muted(0.40))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(detected ? KM.accent.opacity(0.12) : Color.white.opacity(0.03))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(detected ? KM.accent.opacity(0.40) : Color.white.opacity(0.06), lineWidth: 0.5)
+                )
+                .animation(.easeOut(duration: 0.20), value: detected)
+            }
+        }
+    }
+
+    // MARK: Computed
+
+    private var allResolved: Bool {
+        rows.allSatisfy { $0.status == .ok || $0.status == .err }
+    }
+    private var allPassed: Bool {
+        rows.allSatisfy { $0.status == .ok }
+    }
+    private var hasPermissionFailure: Bool {
+        rows.contains(where: { $0.id == "screen" && $0.status == .err })
+    }
+    // True only once every row has fully typed through meta + status. Used to
+    // gate the footer buttons so they never surface while the terminal is
+    // still animating.
+    private var allFullyTyped: Bool {
+        typingHead >= rows.count && rows.allSatisfy { $0.typed >= $0.fullChars }
+    }
+    private var promptMessage: String {
+        if allPassed { return "Ready. Waiting for input." }
+        if allResolved { return "Attention required." }
+        return "Running diagnostic…"
+    }
+
+    // MARK: Screen-capture plumbing
+
     private func refreshScreenCaptureAccess() {
         Task {
             let status = await ScreenCapturePermission.currentStatus()
@@ -318,6 +600,15 @@ struct OnboardingView: View {
         }
     }
 
+    private func requestScreenRecordingAccess() {
+        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
+        // Registers the bundle in TCC so it appears in the Screen Recording list.
+        _ = CGRequestScreenCaptureAccess()
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     private func runSystemCheck() {
         guard !hasAccelerometer else { return }
         sysCheckReader = AccelerometerReader()
@@ -332,155 +623,195 @@ struct OnboardingView: View {
         }
     }
 
-    private var allChecksFinished: Bool {
-        checks.allSatisfy { $0.status != .pending && $0.status != .scanning }
-    }
-    private var allChecksPassed: Bool {
-        checks.allSatisfy { $0.status == .passed }
-    }
-    private var hasPermissionFailure: Bool {
-        checks.contains(where: { $0.id == "permission" && $0.status == .failed })
-    }
+    // MARK: Row mutation
 
-    private func requestScreenRecordingAccess() {
-        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-        // Registers the bundle in TCC so it appears in the Screen Recording list.
-        _ = CGRequestScreenCaptureAccess()
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-            NSWorkspace.shared.open(url)
+    private func revealRow(id: String) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation(.easeOut(duration: 0.18)) {
+            rows[idx].visible = true
+            if rows[idx].status == .pending {
+                rows[idx].status = .scanning
+            }
         }
     }
 
-    private func updateCheck(id: String, granted: Bool) {
-        guard let idx = checks.firstIndex(where: { $0.id == id }) else { return }
-        // Only resolve if we're past this check in the sequence.
-        guard checks[idx].status == .scanning || checks[idx].status == .failed else { return }
+    private func updateRow(id: String, granted: Bool, meta: String? = nil) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        // Probes may fire before typewriter reveals the row (e.g. the IMU
+        // delivers its first sample at ~10ms while row 4 reveals at ~1.7s).
+        // Allow writing the result regardless of current status — the view
+        // only surfaces it once phaseA has been typed.
         withAnimation(.easeOut(duration: 0.25)) {
-            checks[idx].status = granted ? .passed : .failed
-            if id == "sensor" && granted {
-                checks[idx].detail = "Apple Silicon IMU · 100 Hz"
-            }
-            if id == "permission" && granted {
-                checks[idx].detail = "Access granted"
-            }
-            if id == "permission" && !granted {
-                checks[idx].detail = needsCaptureRestart ? "Restart required" : "Permission required"
-            }
+            rows[idx].status = granted ? .ok : .err
+            if let meta = meta { rows[idx].meta = meta }
         }
-        advanceStatusLineIfDone()
+        maybeArmListener()
     }
 
-    private func advanceStatusLineIfDone() {
-        if allChecksPassed {
-            statusLine = "All systems nominal"
-        } else if allChecksFinished {
-            statusLine = "Attention required"
+    private func resolveRow(id: String, granted: Bool, meta: String) {
+        guard let idx = rows.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation(.easeOut(duration: 0.25)) {
+            rows[idx].status = granted ? .ok : .err
+            rows[idx].meta = meta
+        }
+        maybeArmListener()
+    }
+
+    private func maybeArmListener() {
+        let keys = ["os", "cpu", "mem", "accel", "screen", "disk"]
+        let prereqs = keys.compactMap { id in rows.first(where: { $0.id == id }) }
+        guard prereqs.count == keys.count else { return }
+        let allOK = prereqs.allSatisfy { $0.status == .ok }
+        let fullyResolved = prereqs.allSatisfy { $0.status == .ok || $0.status == .err }
+        // Wait until the prereq rows have fully typed out their meta+status
+        // (Phase B) — otherwise "armed OK" prints in parallel with (and often
+        // finishes before) the row above, which breaks the top-to-bottom feel.
+        let allTyped = prereqs.allSatisfy { $0.typed >= $0.fullChars }
+        guard allTyped else { return }
+        guard let idx = rows.firstIndex(where: { $0.id == "listener" }) else { return }
+        guard rows[idx].status == .scanning || rows[idx].status == .pending else { return }
+        if allOK {
+            withAnimation(.easeOut(duration: 0.25)) {
+                rows[idx].status = .ok
+                rows[idx].meta = "armed"
+            }
+        } else if fullyResolved {
+            withAnimation(.easeOut(duration: 0.25)) {
+                rows[idx].status = .err
+                rows[idx].meta = "blocked"
+            }
+        }
+    }
+
+    private func copyLog() {
+        var lines: [String] = ["KnockMac — System Check"]
+        for (i, r) in rows.enumerated() {
+            let tag = "[\(r.tag.rawValue)]".padding(toLength: 8, withPad: " ", startingAt: 0)
+            let label = r.label.padding(toLength: 26, withPad: " ", startingAt: 0)
+            let meta = (r.meta ?? "").padding(toLength: 24, withPad: " ", startingAt: 0)
+            let status: String
+            switch r.status {
+            case .ok: status = "OK"
+            case .err: status = "ERR"
+            case .scanning, .pending: status = "..."
+            }
+            lines.append(String(format: "%02d %@ %@ %@ %@", i + 1, tag, label, meta, status))
+        }
+        lines.append("— \(promptMessage)")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(lines.joined(separator: "\n"), forType: .string)
+    }
+
+    // MARK: Diagnostic sequence
+
+    private func advanceTyping() {
+        // Phase A — strictly serial: one row at a time. Reveals the next row
+        // only when the current row has finished typing idx/tag/label.
+        if typingHead < rows.count {
+            if rows[typingHead].visible {
+                if rows[typingHead].typed < rows[typingHead].phaseAChars {
+                    rows[typingHead].typed += 1
+                } else {
+                    typingHead += 1
+                    if typingHead < rows.count {
+                        rows[typingHead].visible = true
+                        if rows[typingHead].status == .pending {
+                            rows[typingHead].status = .scanning
+                        }
+                    }
+                }
+            }
+        }
+
+        // Phase B — meta + status chars. Runs in parallel across all rows
+        // that are past Phase A and have a resolved status, so a slow probe
+        // on row N doesn't block typing on row N+1.
+        for i in 0..<rows.count {
+            let row = rows[i]
+            guard row.typed >= row.phaseAChars else { continue }
+            guard row.typed < row.fullChars else { continue }
+            if row.status == .ok || row.status == .err {
+                rows[i].typed += 1
+            }
+        }
+
+        // Once every row has been typed out, fire the deferred TCC probe.
+        // This is what surfaces the Screen Recording modal, and it also
+        // flips the row to .ok/.err which lets the action buttons appear.
+        if typingHead >= rows.count && !screenProbeFired {
+            screenProbeFired = true
+            fireScreenRecordingProbe()
+        }
+
+        // Re-check the listener gate each tick — it waits for all prereqs to
+        // finish their Phase B typing, so it can't arm until they're visually
+        // done.
+        maybeArmListener()
+
+        // Prompt line — typed only after the whole table is settled.
+        if typingHead >= rows.count && allResolved && promptTyped < promptMessage.count {
+            promptTyped += 1
         }
     }
 
     private func runAnimatedDiagnostic() {
-        // Stage 1: macOS
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            statusLine = "Detecting operating system…"
-            setChecking(id: "macos")
-        }
+        // Synchronous probes — resolve after brief scan visible window.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-            resolve(id: "macos", detail: SystemInfo.osDescription())
+            resolveRow(id: "os", granted: true, meta: SystemInfo.osDescription())
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+            resolveRow(id: "cpu", granted: true, meta: SystemInfo.chipDescription())
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.95) {
+            resolveRow(id: "mem", granted: true, meta: SystemInfo.memoryDescription())
         }
 
-        // Stage 2: Chip
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.70) {
-            statusLine = "Identifying Apple silicon…"
-            setChecking(id: "chip")
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.10) {
-            resolve(id: "chip", detail: SystemInfo.chipDescription())
-        }
-
-        // Stage 3: Memory
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.25) {
-            statusLine = "Measuring unified memory…"
-            setChecking(id: "memory")
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.60) {
-            resolve(id: "memory", detail: SystemInfo.memoryDescription())
-        }
-
-        // Stage 4: Motion sensor (waits on real HID detection)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.75) {
-            statusLine = "Probing motion sensor at vendor 0x05AC…"
-            setChecking(id: "sensor")
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.20) {
-            statusLine = "Reading IMU sample stream…"
-        }
-        // Sensor check resolves via onChange(hasAccelerometer) — above callback handles it.
-        // Fallback: if still not resolved after 4s, mark failed.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-            if let idx = checks.firstIndex(where: { $0.id == "sensor" }),
-               checks[idx].status == .scanning {
-                updateCheck(id: "sensor", granted: false)
-                checks[idx].detail = "Sensor not found"
+        // Accelerometer — resolves via onChange(hasAccelerometer). Fallback after 4.5 s.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
+            if let idx = rows.firstIndex(where: { $0.id == "accel" }),
+               rows[idx].status == .scanning {
+                updateRow(id: "accel", granted: false, meta: "not found")
             }
         }
 
-        // Stage 5: Screen recording permission
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.60) {
-            statusLine = "Verifying capture permissions…"
-            setChecking(id: "permission")
-            permissionStageStarted = true
-            // Drop the onboarding window from .floating to .normal so the
-            // system TCC prompt surfaces above it. Restored to .floating
-            // in .onChange(of: hasScreenCapture) once access is granted.
-            NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-            Task {
-                let status = await ScreenCapturePermission.currentStatus()
-                await MainActor.run {
-                    applyCaptureStatus(status)
-                    hasScreenCapture = (status == .granted)
-                    updateCheck(id: "permission", granted: status == .granted)
-                }
+        // Disk — probe writable state of ~/Desktop.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.55) {
+            let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
+            let writable = desktop.map { FileManager.default.isWritableFile(atPath: $0.path) } ?? false
+            resolveRow(id: "disk", granted: writable, meta: writable ? "writable" : "not writable")
+        }
+
+        // Screen recording probe is deferred — fires from advanceTyping once
+        // the terminal animation finishes. This keeps the macOS TCC prompt
+        // and the action buttons (Open Settings / Quit & Reopen / Continue)
+        // from surfacing mid-animation.
+    }
+
+    private func fireScreenRecordingProbe() {
+        permissionStageStarted = true
+        NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
+        Task {
+            let status = await ScreenCapturePermission.currentStatus()
+            await MainActor.run {
+                applyCaptureStatus(status)
+                hasScreenCapture = (status == .granted)
+                let granted = status == .granted
+                let meta = granted
+                    ? "granted"
+                    : (needsCaptureRestart ? "restart required" : "permission required")
+                updateRow(id: "screen", granted: granted, meta: meta)
             }
         }
     }
 
-    private func setChecking(id: String) {
-        guard let idx = checks.firstIndex(where: { $0.id == id }) else { return }
-        withAnimation(.easeOut(duration: 0.2)) {
-            checks[idx].status = .scanning
-        }
-        // If the real-world signal already arrived before we reached this stage,
-        // resolve right after the scanning state becomes visible so user sees the
-        // spinner briefly before the green tick.
-        if id == "sensor" && hasAccelerometer {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                updateCheck(id: "sensor", granted: true)
-            }
-        }
-        if id == "permission" {
-            Task {
-                try? await Task.sleep(nanoseconds: 300_000_000)
-                let status = await ScreenCapturePermission.currentStatus()
-                await MainActor.run {
-                    applyCaptureStatus(status)
-                    hasScreenCapture = (status == .granted)
-                    updateCheck(id: "permission", granted: status == .granted)
-                }
-            }
-        }
-    }
+    // MARK: Verification calibration
 
-    private func resolve(id: String, detail: String) {
-        guard let idx = checks.firstIndex(where: { $0.id == id }) else { return }
-        withAnimation(.easeOut(duration: 0.25)) {
-            checks[idx].detail = detail
-            checks[idx].status = .passed
-        }
-    }
-    
     private func startVerificationCalibration() {
         stopCalibration()
         verifyKnockCount = 0
+        liveG = 0.03
+        liveGBuffer.value = 0.03
+        liveGBuffer.skip = 0
 
         let reader = AccelerometerReader()
         let detector = KnockDetector()
@@ -500,20 +831,31 @@ struct OnboardingView: View {
             }
         }
 
+        let buffer = self.liveGBuffer
         reader.onSample = { sample in
             detector.feed(sample)
+            let mag = abs(sample.magnitude - 1.0)
+            buffer.value = buffer.value * 0.88 + mag * 0.12
+            buffer.skip += 1
+            if buffer.skip >= 4 {
+                buffer.skip = 0
+                let v = buffer.value
+                DispatchQueue.main.async {
+                    self.liveG = v
+                }
+            }
         }
 
         self.calibrationReader = reader
         self.calibrationDetector = detector
     }
-    
+
     private func stopCalibration() {
         calibrationReader?.stop()
         calibrationReader = nil
         calibrationDetector = nil
     }
-    
+
     private func finishOnboarding() {
         stopCalibration()
 
@@ -531,7 +873,8 @@ struct OnboardingView: View {
     }
 }
 
-// Window manager to present the onboarding view reliably
+// MARK: - Window manager
+
 @MainActor
 class OnboardingWindowManager {
     static let shared = OnboardingWindowManager()
@@ -540,6 +883,11 @@ class OnboardingWindowManager {
 
     func showIfNeeded() {
         guard !KnockController.hasRequiredPermissions() else { return }
+        // Clear the completion flag so any subsequent relaunch (ours or
+        // macOS's auto Quit & Reopen after a TCC grant) re-surfaces the
+        // wizard instead of just showing the menu bar icon silently.
+        UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+        UserDefaults.standard.synchronize()
         show(title: "KnockMac Setup")
     }
 
@@ -563,8 +911,10 @@ class OnboardingWindowManager {
                 object: settingsWindow,
                 queue: .main
             ) { _ in
-                NotificationCenter.default.post(name: NSNotification.Name("OnboardingCompleted"), object: nil)
-                NSApp.setActivationPolicy(.accessory)
+                MainActor.assumeIsolated {
+                    NotificationCenter.default.post(name: NSNotification.Name("OnboardingCompleted"), object: nil)
+                    NSApp.setActivationPolicy(.accessory)
+                }
             }
         }
     }
@@ -591,6 +941,9 @@ class OnboardingWindowManager {
             newWindow.isReleasedWhenClosed = false
             newWindow.contentViewController = hostingController
             newWindow.level = .floating
+            // Force dark so the terminal panel and tokens render consistently
+            // regardless of the user's system appearance.
+            newWindow.appearance = NSAppearance(named: .darkAqua)
 
             // Heavier rounding on the window itself to match the Liquid Glass aesthetic.
             newWindow.contentView?.wantsLayer = true
@@ -628,108 +981,6 @@ class OnboardingWindowManager {
     }
 }
 
-// MARK: - System check model & row view
-
-enum CheckStatus: Equatable {
-    case pending
-    case scanning
-    case passed
-    case failed
-}
-
-struct SystemCheck: Identifiable, Equatable {
-    let id: String
-    let title: String
-    let icon: String
-    var detail: String? = nil
-    var status: CheckStatus = .pending
-    var showsGrantOnFailure: Bool = false
-
-    static func initial() -> [SystemCheck] {
-        [
-            SystemCheck(id: "macos", title: "Operating System", icon: "desktopcomputer"),
-            SystemCheck(id: "chip", title: "Processor", icon: "cpu"),
-            SystemCheck(id: "memory", title: "Memory", icon: "memorychip"),
-            SystemCheck(id: "sensor", title: "Motion Sensor", icon: "sensor.tag.radiowaves.forward"),
-            SystemCheck(id: "permission", title: "Screen Recording", icon: "camera.viewfinder",
-                        showsGrantOnFailure: true)
-        ]
-    }
-}
-
-struct SystemCheckRow: View {
-    let check: SystemCheck
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: check.icon)
-                .font(.system(size: 14))
-                .foregroundColor(iconColor)
-                .frame(width: 20)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(check.title)
-                    .font(.body)
-                    .foregroundColor(titleColor)
-                Group {
-                    if let detail = check.detail {
-                        Text(detail).foregroundColor(.secondary)
-                    } else if check.status == .failed && check.showsGrantOnFailure {
-                        Text("Permission required").foregroundColor(.orange)
-                    } else {
-                        Text(" ").foregroundColor(.clear)
-                    }
-                }
-                .font(.callout)
-                .transition(.opacity)
-            }
-
-            Spacer()
-
-            statusIndicator
-                .frame(width: 18, height: 18)
-        }
-        .padding(.vertical, 2)
-        .opacity(check.status == .pending ? 0.4 : 1.0)
-    }
-
-    @ViewBuilder
-    private var statusIndicator: some View {
-        switch check.status {
-        case .pending:
-            Image(systemName: "circle.dotted")
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
-        case .scanning:
-            ProgressView()
-                .scaleEffect(0.5)
-        case .passed:
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 14))
-                .foregroundColor(.green)
-                .transition(.scale.combined(with: .opacity))
-        case .failed:
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14))
-                .foregroundColor(.orange)
-                .transition(.scale.combined(with: .opacity))
-        }
-    }
-
-    private var iconColor: Color {
-        switch check.status {
-        case .pending: return .secondary
-        case .scanning: return .blue
-        case .passed: return .green
-        case .failed: return .orange
-        }
-    }
-
-    private var titleColor: Color {
-        check.status == .pending ? .secondary : .primary
-    }
-}
-
 // MARK: - System info readers
 
 enum SystemInfo {
@@ -744,7 +995,7 @@ enum SystemInfo {
         let cores = sysctlInt("hw.perflevel0.physicalcpu") ?? 0
         let effCores = sysctlInt("hw.perflevel1.physicalcpu") ?? 0
         if cores > 0 && effCores > 0 {
-            return "\(brand) · \(cores)P + \(effCores)E cores"
+            return "\(brand) · \(cores)P+\(effCores)E"
         }
         let total = sysctlInt("hw.physicalcpu") ?? 0
         return total > 0 ? "\(brand) · \(total) cores" : brand
@@ -753,7 +1004,7 @@ enum SystemInfo {
     static func memoryDescription() -> String {
         guard let bytes = sysctlUInt64("hw.memsize") else { return "Unknown" }
         let gb = Double(bytes) / 1024 / 1024 / 1024
-        return String(format: "%.0f GB unified memory", gb)
+        return String(format: "%.0f GB unified", gb)
     }
 
     static func sysctlString(_ name: String) -> String? {
@@ -761,7 +1012,8 @@ enum SystemInfo {
         guard sysctlbyname(name, nil, &size, nil, 0) == 0, size > 0 else { return nil }
         var buffer = [CChar](repeating: 0, count: size)
         guard sysctlbyname(name, &buffer, &size, nil, 0) == 0 else { return nil }
-        return String(cString: buffer)
+        let bytes = buffer.prefix(while: { $0 != 0 }).map { UInt8(bitPattern: $0) }
+        return String(decoding: bytes, as: UTF8.self)
     }
 
     static func sysctlInt(_ name: String) -> Int? {

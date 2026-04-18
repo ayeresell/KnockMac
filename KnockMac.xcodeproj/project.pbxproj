@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1E2712CE265682F72312837F /* AdaptiveBaseline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */; };
 		1F13AF9B9C2DE8C48285CA04 /* CandidateTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C986281E97DD910952B446A /* CandidateTracker.swift */; };
+		4511E01B45C3B4A9FD3A30D9 /* KnockGlowPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30325E2355691C3EB203571F /* KnockGlowPhaseTests.swift */; };
 		4874DF685AC9CF1669C8CD20 /* Placeholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1108EC81C76695F005910E /* Placeholder.swift */; };
 		53F0F9933102B68C46E3A7CC /* DoubleKnockMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5AC8CA462EC842FDB74746 /* DoubleKnockMatcherTests.swift */; };
 		5586FCF39C9075C4C7CFE06F /* AdaptiveBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8420B36C4D8F68DC4609BC6 /* AdaptiveBaselineTests.swift */; };
@@ -19,6 +20,7 @@
 		A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */; };
 		B1265EA1BAE7BE5415CF363F /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8D72CEDC8CD69AE5C47AECCC /* AppIcon.icns */; };
 		B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */; };
+		C3C279C9E58704DEBB7D30D0 /* KnockGlowOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0675F9C1C11515BFB58F1EC7 /* KnockGlowOverlay.swift */; };
 		C434BC3B6752F685B6AE1D65 /* ShapeAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D73580E7B6CDFF33694DEBE /* ShapeAnalyzer.swift */; };
 		C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B61FC59407AED88DC86806D /* InputActivityGate.swift */; };
 		CFE0F0EE572E23F98DAF56CF /* CandidateTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2947F5853CBD4C713F2BAA33 /* CandidateTrackerTests.swift */; };
@@ -42,9 +44,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0675F9C1C11515BFB58F1EC7 /* KnockGlowOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockGlowOverlay.swift; sourceTree = "<group>"; };
 		0B61FC59407AED88DC86806D /* InputActivityGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputActivityGate.swift; sourceTree = "<group>"; };
 		14150E502C3560D21F6F8FD9 /* KnockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockController.swift; sourceTree = "<group>"; };
 		2947F5853CBD4C713F2BAA33 /* CandidateTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTrackerTests.swift; sourceTree = "<group>"; };
+		30325E2355691C3EB203571F /* KnockGlowPhaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockGlowPhaseTests.swift; sourceTree = "<group>"; };
 		335D88182787E06CBE84A200 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		4483C13338D8663F321A356B /* ScreenCapturePermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapturePermission.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
@@ -99,6 +103,7 @@
 		406E6E9139B0D827520F0FCA /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				0675F9C1C11515BFB58F1EC7 /* KnockGlowOverlay.swift */,
 				6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */,
 				335D88182787E06CBE84A200 /* OnboardingView.swift */,
 			);
@@ -154,6 +159,7 @@
 				B8420B36C4D8F68DC4609BC6 /* AdaptiveBaselineTests.swift */,
 				2947F5853CBD4C713F2BAA33 /* CandidateTrackerTests.swift */,
 				BE5AC8CA462EC842FDB74746 /* DoubleKnockMatcherTests.swift */,
+				30325E2355691C3EB203571F /* KnockGlowPhaseTests.swift */,
 				EF1108EC81C76695F005910E /* Placeholder.swift */,
 				EC2E087AE43593971B3F456C /* ShapeAnalyzerTests.swift */,
 			);
@@ -267,6 +273,7 @@
 				5586FCF39C9075C4C7CFE06F /* AdaptiveBaselineTests.swift in Sources */,
 				CFE0F0EE572E23F98DAF56CF /* CandidateTrackerTests.swift in Sources */,
 				53F0F9933102B68C46E3A7CC /* DoubleKnockMatcherTests.swift in Sources */,
+				4511E01B45C3B4A9FD3A30D9 /* KnockGlowPhaseTests.swift in Sources */,
 				4874DF685AC9CF1669C8CD20 /* Placeholder.swift in Sources */,
 				D156A24D44CE2DF95B6AC25D /* ShapeAnalyzerTests.swift in Sources */,
 			);
@@ -284,6 +291,7 @@
 				C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */,
 				732D57353CBC878907D1F288 /* KnockController.swift in Sources */,
 				FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */,
+				C3C279C9E58704DEBB7D30D0 /* KnockGlowOverlay.swift in Sources */,
 				E087FD2C6A2E4C15D244BDC6 /* KnockMacApp.swift in Sources */,
 				B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */,
 				F24F830E7EBC6A6395BAE7F3 /* OnboardingView.swift in Sources */,
@@ -357,10 +365,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CODE_SIGN_FLAGS = "--options=runtime";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -475,9 +484,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_CODE_SIGN_FLAGS = "--options=runtime";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;

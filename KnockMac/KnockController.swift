@@ -57,6 +57,7 @@ final class KnockController: ObservableObject {
 
     private func handleKnock() {
         lastKnockTime = Date()
+        KnockGlowWindowController.shared.flash()
         audioPlayer.playKnockSound()
         ScreenshotAction.captureFullScreen()
     }

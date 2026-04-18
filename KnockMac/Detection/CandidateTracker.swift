@@ -24,6 +24,14 @@ final class CandidateTracker {
     private var baselineAtStart: Double = 0
     private var quietRun: Int = 0
 
+    func reset() {
+        state = .idle
+        collected = []
+        peakIndex = 0
+        peakDeviation = 0
+        quietRun = 0
+    }
+
     func feed(_ sample: AccelSample, deviation: Double, threshold: Double, baseline: Double) {
         switch state {
         case .idle:
