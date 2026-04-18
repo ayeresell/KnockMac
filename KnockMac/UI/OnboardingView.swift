@@ -98,14 +98,13 @@ struct TerminalRowView: View {
         let idxShown   = String(idxText.prefix(max(0, min(2, typed))))
         let labelShown = String(labelText.prefix(max(0, typed - 2)))
 
-        // Phase B columns — meta then status, typed char-by-char.
+        // Phase B — meta types char-by-char. Status (OK/ERR) is not typed;
+        // it replaces the spinner as a whole unit once meta is fully typed.
         let pastPhaseA = max(0, typed - row.phaseAChars)
         let metaText   = row.meta ?? ""
         let metaShown  = String(metaText.prefix(min(metaText.count, pastPhaseA)))
-
-        let pastMeta    = max(0, pastPhaseA - metaText.count)
-        let statusFull  = row.statusText
-        let statusShown = String(statusFull.prefix(min(statusFull.count, pastMeta)))
+        let metaDone   = !metaText.isEmpty && pastPhaseA >= metaText.count
+        let statusResolved = row.status == .ok || row.status == .err
 
         let statusColor: Color = {
             switch row.status {
@@ -131,12 +130,14 @@ struct TerminalRowView: View {
                 .truncationMode(.tail)
 
             Group {
-                if row.phaseADone && (row.status == .scanning || row.status == .pending) {
-                    ScanningDotsView()
-                } else {
-                    Text(statusShown)
+                if row.phaseADone && statusResolved && metaDone {
+                    Text(row.statusText)
                         .foregroundColor(statusColor)
                         .fontWeight(.semibold)
+                } else if row.phaseADone {
+                    ScanningDotsView()
+                } else {
+                    Text("")
                 }
             }
             .frame(width: 30, alignment: .trailing)
