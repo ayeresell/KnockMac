@@ -35,7 +35,11 @@ final class KnockController: ObservableObject {
             guard let self else { return }
             // Track sensor availability regardless of isActive so the onboarding
             // System Check can verify the IMU even before permissions are granted.
-            if !self.sensorAvailable { self.sensorAvailable = true }
+            if !self.sensorAvailable {
+                self.sensorAvailable = true
+                Self.sensorEverAvailable = true
+                NotificationCenter.default.post(name: .sensorAvailable, object: nil)
+            }
             guard self.isActive else { return }
             self.knockDetector.feed(sample)
         }
