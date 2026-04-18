@@ -68,6 +68,13 @@ final class ActionRegistryTests: XCTestCase {
 
     func testCatalogContainsAllExpectedActions() {
         let ids = ActionRegistry.all.map(\.id)
-        XCTAssertEqual(ids, ["screenshot", "lockScreen", "runShortcut", "openItem"])
+        XCTAssertEqual(ids, ["screenshot", "lockScreen", "switchKeyboardLayout", "runShortcut", "openItem"])
+    }
+
+    func testReturnsSwitchKeyboardLayoutForID() {
+        let defaults = makeDefaults()
+        defaults.set("switchKeyboardLayout", forKey: "selectedActionID")
+        let action = ActionRegistry.current(defaults: defaults)
+        XCTAssertTrue(action is SwitchKeyboardLayoutAction)
     }
 }
