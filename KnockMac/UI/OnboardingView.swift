@@ -179,7 +179,6 @@ struct OnboardingView: View {
     @State private var hasScreenCapture = false
     @State private var needsCaptureRestart = false
     @State private var hasAccelerometer = false
-    @State private var sysCheckReader: AccelerometerReader?
     @State private var rows: [TerminalRow] = TerminalRow.initial()
     @State private var checksStarted = false
     @State private var permissionStageStarted = false
