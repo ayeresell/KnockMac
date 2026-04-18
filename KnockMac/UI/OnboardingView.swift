@@ -65,9 +65,9 @@ struct TerminalRow: Identifiable, Equatable {
         }
     }
 
-    // Grows once status resolves, so typed can advance past phaseAChars and
-    // type meta + status one char at a time.
-    var fullChars: Int { phaseAChars + (meta ?? "").count + statusText.count }
+    // Phase B is just meta — status (OK/ERR) is revealed as a whole unit
+    // once `typed` hits this ceiling, replacing the scanning spinner.
+    var fullChars: Int { phaseAChars + (meta ?? "").count }
 
     static func initial() -> [TerminalRow] {
         [
