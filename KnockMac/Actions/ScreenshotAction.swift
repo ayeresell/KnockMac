@@ -4,11 +4,22 @@ import CoreGraphics
 import AppKit
 import AudioToolbox
 
-enum ScreenshotAction {
+struct ScreenshotAction: KnockAction {
+    static let descriptor = ActionDescriptor(
+        id: "screenshot",
+        title: "Screenshot",
+        systemImage: "camera.viewfinder",
+        requiresConfiguration: false,
+        make: { _ in ScreenshotAction() }
+    )
 
-    // Native macOS screenshot "Grab" sound. Registered once and reused —
-    // AudioServicesCreateSystemSoundID is cheap to call repeatedly but the
-    // sound ID itself is persistent for the process lifetime.
+    @MainActor
+    func perform() {
+        ScreenshotAction.captureFullScreen()
+    }
+
+    // MARK: - Capture pipeline (preserved from previous enum implementation)
+
     private static let grabSoundID: SystemSoundID = {
         var id: SystemSoundID = 0
         let url = URL(fileURLWithPath: "/System/Library/Components/CoreAudio.component/Contents/SharedSupport/SystemSounds/system/Grab.aif")
@@ -40,7 +51,6 @@ enum ScreenshotAction {
                 saveImage(image)
             } catch {
                 print("[Screenshot] ERROR: \(error)")
-                // Open Screen Recording settings
                 NSWorkspace.shared.open(
                     URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
                 )
