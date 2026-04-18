@@ -735,14 +735,6 @@ struct OnboardingView: View {
             }
         }
 
-        // Once every row has been typed out, fire the deferred TCC probe.
-        // This is what surfaces the Screen Recording modal, and it also
-        // flips the row to .ok/.err which lets the action buttons appear.
-        if typingHead >= rows.count && !screenProbeFired {
-            screenProbeFired = true
-            fireScreenRecordingProbe()
-        }
-
         // Re-check the listener gate each tick — it waits for all prereqs to
         // finish their Phase B typing, so it can't arm until they're visually
         // done.
@@ -751,6 +743,20 @@ struct OnboardingView: View {
         // Prompt line — typed only after the whole table is settled.
         if typingHead >= rows.count && allResolved && promptTyped < promptMessage.count {
             promptTyped += 1
+        }
+
+        // TCC modal is deferred until the terminal has completely finished
+        // animating — status + ERR + listener "blocked" are all typed out
+        // before the system prompt surfaces. Skipped when access is already
+        // granted, or when only a relaunch can recover (user uses the
+        // "Quit & Reopen" button instead).
+        if allFullyTyped
+            && !screenModalFired
+            && !hasScreenCapture
+            && !needsCaptureRestart
+        {
+            screenModalFired = true
+            fireScreenRecordingModal()
         }
     }
 
