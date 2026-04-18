@@ -348,7 +348,12 @@ struct OnboardingView: View {
                     .controlSize(.large)
                     .buttonBorderShape(.capsule)
                     .transition(.opacity.combined(with: .scale))
-                } else if needsCaptureRestart {
+                } else if needsCaptureRestart || (screenModalFired && hasPermissionFailure) {
+                    // Two paths land here: user toggled TCC mid-session
+                    // (restart required), or the TCC modal has already been
+                    // surfaced — in the latter case "Quit & Reopen" acts as
+                    // the in-app recovery if they grant in Settings or
+                    // accidentally hit Later on the native prompt.
                     Button("Quit & Reopen") {
                         UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
                         UserDefaults.standard.synchronize()
