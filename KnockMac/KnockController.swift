@@ -49,6 +49,12 @@ final class KnockController: ObservableObject {
                 self?.accelReader.rebind()
             }
             .store(in: &cancellables)
+
+        // Hook for future pre-warming (e.g. caching shortcut metadata).
+        // No-op in v1 — ActionRegistry.current() reads UserDefaults on every knock.
+        NotificationCenter.default.publisher(for: NSNotification.Name("ActionChanged"))
+            .sink { _ in }
+            .store(in: &cancellables)
     }
 
     func toggle() {
