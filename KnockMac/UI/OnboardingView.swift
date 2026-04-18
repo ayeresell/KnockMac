@@ -93,12 +93,10 @@ struct TerminalRowView: View {
 
         // Phase A columns
         let idxText   = String(format: "%02d", index)
-        let tagText   = "[\(row.tag.rawValue)]"
         let labelText = row.label
 
         let idxShown   = String(idxText.prefix(max(0, min(2, typed))))
-        let tagShown   = String(tagText.prefix(max(0, min(7, typed - 2))))
-        let labelShown = String(labelText.prefix(max(0, typed - 9)))
+        let labelShown = String(labelText.prefix(max(0, typed - 2)))
 
         // Phase B columns — meta then status, typed char-by-char.
         let pastPhaseA = max(0, typed - row.phaseAChars)
@@ -121,10 +119,6 @@ struct TerminalRowView: View {
             Text(idxShown)
                 .foregroundColor(KM.muted(0.35))
                 .frame(width: 18, alignment: .leading)
-
-            Text(tagShown)
-                .foregroundColor(KM.tagColor(row.tag))
-                .frame(width: 52, alignment: .leading)
 
             Text(labelShown)
                 .foregroundColor(KM.primary)
