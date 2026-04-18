@@ -4,10 +4,10 @@ import CoreGraphics
 
 @MainActor
 final class KnockController: ObservableObject {
-    // Weak singleton so the onboarding System Check can read sensorAvailable
-    // without spawning a second AccelerometerReader (which races for the HID
-    // callback and falsely reports "not found").
-    nonisolated(unsafe) static private(set) weak var current: KnockController?
+    // Latched flag for late observers (e.g. OnboardingView mounting after
+    // the first sample has already arrived). Notification fires on the
+    // false→true transition; this captures the state for whoever missed it.
+    nonisolated(unsafe) static private(set) var sensorEverAvailable: Bool = false
 
     @Published var isActive: Bool
     @Published var lastKnockTime: Date?
