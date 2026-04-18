@@ -67,8 +67,6 @@ final class KnockController: ObservableObject {
         NotificationCenter.default.publisher(for: NSNotification.Name("ActionChanged"))
             .sink { _ in }
             .store(in: &cancellables)
-
-        Self.current = self
     }
 
     func toggle() {
