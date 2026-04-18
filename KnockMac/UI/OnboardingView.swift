@@ -699,51 +699,53 @@ struct OnboardingView: View {
     // MARK: Diagnostic sequence
 
     private func advanceTyping() {
-        // Phase A — strictly serial: one row at a time. Reveals the next row
-        // only when the current row has finished typing idx/tag/label.
+        // Strictly serial flow: one row fully completes (label → spinner
+        // while meta types → status) before the next row is revealed.
         if typingHead < rows.count {
-            if rows[typingHead].visible {
-                if rows[typingHead].typed < rows[typingHead].phaseAChars {
-                    rows[typingHead].typed += 1
-                } else {
-                    typingHead += 1
-                    if typingHead < rows.count {
-                        rows[typingHead].visible = true
-                        if rows[typingHead].status == .pending {
-                            rows[typingHead].status = .scanning
-                        }
-                    }
+            // Reveal the row if it hasn't been already. Label typing starts
+            // immediately; the spinner only appears once the label finishes.
+            if !rows[typingHead].visible {
+                rows[typingHead].visible = true
+                if rows[typingHead].status == .pending {
+                    rows[typingHead].status = .scanning
                 }
             }
-        }
 
-        // Phase B — meta + status chars. Runs in parallel across all rows
-        // that are past Phase A and have a resolved status, so a slow probe
-        // on row N doesn't block typing on row N+1.
-        for i in 0..<rows.count {
-            let row = rows[i]
-            guard row.typed >= row.phaseAChars else { continue }
-            guard row.typed < row.fullChars else { continue }
-            if row.status == .ok || row.status == .err {
-                rows[i].typed += 1
+            // Phase A: type the label char by char.
+            if rows[typingHead].typed < rows[typingHead].phaseAChars {
+                rows[typingHead].typed += 1
+                return
             }
+
+            // Label is done. If the probe hasn't resolved yet, hold here —
+            // the spinner keeps ticking until the meta string is known.
+            // The listener row arms synchronously from this gate check so it
+            // can start typing as soon as we land on it.
+            if rows[typingHead].status == .scanning || rows[typingHead].status == .pending {
+                maybeArmListener()
+                return
+            }
+
+            // Phase B: type the meta char by char. Spinner keeps spinning
+            // until meta is fully typed (handled in the view).
+            if rows[typingHead].typed < rows[typingHead].fullChars {
+                rows[typingHead].typed += 1
+                return
+            }
+
+            // Row is fully typed — move on to the next one.
+            typingHead += 1
+            return
         }
 
-        // Re-check the listener gate each tick — it waits for all prereqs to
-        // finish their Phase B typing, so it can't arm until they're visually
-        // done.
-        maybeArmListener()
-
-        // Prompt line — typed only after the whole table is settled.
-        if typingHead >= rows.count && allResolved && promptTyped < promptMessage.count {
-            promptTyped += 1
-        }
-
-        // TCC modal is deferred until the terminal has completely finished
-        // animating — status + ERR + listener "blocked" are all typed out
-        // before the system prompt surfaces. Skipped when access is already
+        // All rows done. Prompt line types; TCC modal is deferred until
+        // everything above has fully settled so the system prompt never
+        // races with the scanning animation. Skipped when access is already
         // granted, or when only a relaunch can recover (user uses the
         // "Quit & Reopen" button instead).
+        if allResolved && promptTyped < promptMessage.count {
+            promptTyped += 1
+        }
         if allFullyTyped
             && !screenModalFired
             && !hasScreenCapture
