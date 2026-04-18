@@ -774,34 +774,50 @@ struct OnboardingView: View {
             }
         }
 
+        // Screen recording — safe preflight. Doesn't surface the TCC modal;
+        // that's deferred to fireScreenRecordingModal() which runs only after
+        // the whole terminal has finished typing (see advanceTyping).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.15) {
+            probeScreenRecording()
+        }
+
         // Disk — probe writable state of ~/Desktop.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.55) {
             let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
             let writable = desktop.map { FileManager.default.isWritableFile(atPath: $0.path) } ?? false
             resolveRow(id: "disk", granted: writable, meta: writable ? "writable" : "not writable")
         }
-
-        // Screen recording probe is deferred — fires from advanceTyping once
-        // the terminal animation finishes. This keeps the macOS TCC prompt
-        // and the action buttons (Open Settings / Quit & Reopen / Continue)
-        // from surfacing mid-animation.
     }
 
-    private func fireScreenRecordingProbe() {
+    // Synchronous TCC-state probe. CGPreflightScreenCaptureAccess returns the
+    // cached TCC entry without prompting — comparing it to launchTimeGranted
+    // also catches the "user toggled since launch" case that requires a
+    // relaunch.
+    private func probeScreenRecording() {
+        let preflight = CGPreflightScreenCaptureAccess()
+        let launch = ScreenCapturePermission.launchTimeGranted
+        let restartNeeded = (preflight != launch)
+        let granted = preflight && !restartNeeded
+        needsCaptureRestart = restartNeeded
+        hasScreenCapture = granted
+        if restartNeeded {
+            UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+            UserDefaults.standard.synchronize()
+        }
+        let meta = granted
+            ? "granted"
+            : (restartNeeded ? "restart required" : "permission required")
+        updateRow(id: "screen", granted: granted, meta: meta)
+    }
+
+    // Surfaces the actual macOS TCC modal. Called only after the terminal
+    // finishes typing so the prompt never races with the scanning animation.
+    // No-op if access is already granted, or the user just needs to relaunch
+    // (in that case the "Quit & Reopen" button is the recovery path).
+    private func fireScreenRecordingModal() {
         permissionStageStarted = true
         NSApp.windows.first(where: { $0.title.hasPrefix("KnockMac") })?.level = .normal
-        Task {
-            let status = await ScreenCapturePermission.currentStatus()
-            await MainActor.run {
-                applyCaptureStatus(status)
-                hasScreenCapture = (status == .granted)
-                let granted = status == .granted
-                let meta = granted
-                    ? "granted"
-                    : (needsCaptureRestart ? "restart required" : "permission required")
-                updateRow(id: "screen", granted: granted, meta: meta)
-            }
-        }
+        _ = CGRequestScreenCaptureAccess()
     }
 
     // MARK: Verification calibration
