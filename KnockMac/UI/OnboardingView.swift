@@ -230,7 +230,6 @@ struct OnboardingView: View {
         }
         .onDisappear {
             stopCalibration()
-            sysCheckReader?.stop()
         }
     }
 
