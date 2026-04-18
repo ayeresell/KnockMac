@@ -1051,6 +1051,98 @@ struct OnboardingView: View {
         calibrationDetector = nil
     }
 
+    // MARK: Step 3 helpers
+
+    private var selectedActionIsConfigured: Bool {
+        guard let descriptor = ActionRegistry.descriptor(forID: selectedActionID) else {
+            return false
+        }
+        if !descriptor.requiresConfiguration { return true }
+        switch descriptor.id {
+        case RunShortcutAction.descriptor.id:
+            return !pendingShortcutName.isEmpty
+        case OpenItemAction.descriptor.id:
+            switch pendingOpenKind {
+            case .app: return !pendingAppBundleID.isEmpty
+            case .url: return URL(string: pendingURLString) != nil && !pendingURLString.isEmpty
+            }
+        default:
+            return false
+        }
+    }
+
+    private func hydrateActionStateFromDefaults() {
+        let defaults = UserDefaults.standard
+        if let id = defaults.string(forKey: ActionRegistry.selectedActionIDKey) {
+            selectedActionID = id
+        }
+        let configData = defaults.data(forKey: ActionRegistry.selectedActionConfigKey)
+
+        if selectedActionID == RunShortcutAction.descriptor.id {
+            if let data = configData,
+               let cfg = try? JSONDecoder().decode(RunShortcutAction.Config.self, from: data) {
+                pendingShortcutName = cfg.shortcutName
+            }
+            refreshAvailableShortcuts()
+        } else if selectedActionID == OpenItemAction.descriptor.id {
+            if let data = configData,
+               let cfg = try? JSONDecoder().decode(OpenItemAction.Config.self, from: data) {
+                pendingOpenKind = cfg.kind
+                if cfg.kind == .app {
+                    pendingAppBundleID = cfg.value
+                    if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: cfg.value) {
+                        pendingAppDisplayName = FileManager.default.displayName(atPath: url.path)
+                    }
+                } else {
+                    pendingURLString = cfg.value
+                }
+            }
+        }
+    }
+
+    private func refreshAvailableShortcuts() {
+        Task.detached(priority: .userInitiated) {
+            let names = RunShortcutAction.availableShortcuts()
+            await MainActor.run { self.availableShortcuts = names }
+        }
+    }
+
+    private func chooseApp() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.applicationBundle]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let bundle = Bundle(url: url), let id = bundle.bundleIdentifier else {
+            print("[Onboarding] picked file is not an app bundle: \(url.path)")
+            return
+        }
+        pendingAppBundleID = id
+        pendingAppDisplayName = FileManager.default.displayName(atPath: url.path)
+    }
+
+    private func persistSelectedActionAndFinish() {
+        let defaults = UserDefaults.standard
+        defaults.set(selectedActionID, forKey: ActionRegistry.selectedActionIDKey)
+
+        switch selectedActionID {
+        case RunShortcutAction.descriptor.id:
+            let cfg = RunShortcutAction.Config(shortcutName: pendingShortcutName)
+            defaults.set(try? JSONEncoder().encode(cfg), forKey: ActionRegistry.selectedActionConfigKey)
+        case OpenItemAction.descriptor.id:
+            let value = pendingOpenKind == .app ? pendingAppBundleID : pendingURLString
+            let cfg = OpenItemAction.Config(kind: pendingOpenKind, value: value)
+            defaults.set(try? JSONEncoder().encode(cfg), forKey: ActionRegistry.selectedActionConfigKey)
+        default:
+            defaults.removeObject(forKey: ActionRegistry.selectedActionConfigKey)
+        }
+
+        NotificationCenter.default.post(name: NSNotification.Name("ActionChanged"), object: nil)
+        finishOnboarding()
+    }
+
     private func finishOnboarding() {
         stopCalibration()
 
