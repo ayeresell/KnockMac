@@ -966,6 +966,9 @@ class OnboardingWindowManager {
             newWindow.titlebarAppearsTransparent = true
             newWindow.isMovableByWindowBackground = true
             newWindow.isReleasedWhenClosed = false
+            // Disable AppKit window-state restoration so a previously moved
+            // position doesn't pull the next launch off-centre.
+            newWindow.isRestorable = false
             newWindow.contentViewController = hostingController
             newWindow.level = .floating
             // Force dark so the terminal panel and tokens render consistently
