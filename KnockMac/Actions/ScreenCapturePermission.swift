@@ -55,6 +55,27 @@ enum ScreenCapturePermission {
         return current ? .granted : .denied
     }
 
+    // Same SCShareableContent probe as currentStatus(), but does NOT upgrade
+    // the launch-time snapshot. Used by the onboarding polling loop: we
+    // want to detect the grant→restart-required transition right as macOS
+    // surfaces its own "Quit & Reopen" alert, which means the snapshot has
+    // to stay frozen at the launch value.
+    static func liveStatus() async -> Status {
+        let current: Bool
+        do {
+            _ = try await SCShareableContent.excludingDesktopWindows(
+                false, onScreenWindowsOnly: true
+            )
+            current = true
+        } catch {
+            current = false
+        }
+        if current != launchTimeGranted {
+            return .restartRequired
+        }
+        return current ? .granted : .denied
+    }
+
     // Relaunches the app via LaunchServices, then terminates the current
     // process only after the new instance has successfully spawned. The
     // previous Process + `open -n` approach could silently fail under
