@@ -101,13 +101,11 @@ struct TerminalRowView: View {
         let idxShown   = String(idxText.prefix(max(0, min(2, typed))))
         let labelShown = String(labelText.prefix(max(0, typed - 2)))
 
-        // Phase B — meta types char-by-char. Status (OK/ERR) is not typed;
-        // it replaces the spinner as a whole unit once meta is fully typed.
+        // Meta types char-by-char. Status (OK/ERR) isn't typed — it
+        // replaces the spinner as a whole unit once `statusRevealed` flips.
         let pastPhaseA = max(0, typed - row.phaseAChars)
         let metaText   = row.meta ?? ""
         let metaShown  = String(metaText.prefix(min(metaText.count, pastPhaseA)))
-        let metaDone   = !metaText.isEmpty && pastPhaseA >= metaText.count
-        let statusResolved = row.status == .ok || row.status == .err
 
         let statusColor: Color = {
             switch row.status {
