@@ -202,6 +202,15 @@ struct OnboardingView: View {
     @State private var calibrationStarted = false
     @State private var liveGBuffer = LiveGBuffer()
 
+    // Step 3 (Pick your action)
+    @State private var selectedActionID: String = ActionRegistry.defaultActionID
+    @State private var pendingShortcutName: String = ""
+    @State private var availableShortcuts: [String] = []
+    @State private var pendingOpenKind: OpenItemAction.Kind = .app
+    @State private var pendingAppBundleID: String = ""
+    @State private var pendingAppDisplayName: String = ""
+    @State private var pendingURLString: String = ""
+
     var body: some View {
         VStack(spacing: 0) {
             if step == 0 {
@@ -210,6 +219,8 @@ struct OnboardingView: View {
                 whereToKnockScreen
             } else if step == 2 {
                 testItOutScreen
+            } else if step == 3 {
+                pickActionScreen
             }
         }
         .frame(width: 460, height: 480)
