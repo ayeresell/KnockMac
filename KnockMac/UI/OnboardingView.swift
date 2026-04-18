@@ -133,10 +133,11 @@ struct TerminalRowView: View {
                 .truncationMode(.tail)
 
             Group {
-                if row.phaseADone && statusResolved && metaDone {
+                if row.statusRevealed {
                     Text(row.statusText)
                         .foregroundColor(statusColor)
                         .fontWeight(.semibold)
+                        .transition(.opacity)
                 } else if row.phaseADone {
                     ScanningDotsView()
                 } else {
