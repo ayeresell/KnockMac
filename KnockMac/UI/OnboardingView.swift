@@ -255,9 +255,12 @@ struct OnboardingView: View {
                 checksStarted = true
                 runSystemCheck()
                 runAnimatedDiagnostic()
-                if !rows.isEmpty {
-                    rows[0].visible = true
-                    if rows[0].status == .pending { rows[0].status = .scanning }
+                // All labels appear up-front with a scanning spinner — meta
+                // and status type in serially afterwards.
+                for i in rows.indices {
+                    rows[i].visible = true
+                    rows[i].typed = rows[i].phaseAChars
+                    if rows[i].status == .pending { rows[i].status = .scanning }
                 }
             }
         }
