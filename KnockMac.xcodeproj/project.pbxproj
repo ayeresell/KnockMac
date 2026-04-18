@@ -18,6 +18,7 @@
 		88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */; };
 		A0767FF5FD79991E21BF7929 /* DoubleKnockMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74C805401FDE7E3F8E9447C9 /* DoubleKnockMatcher.swift */; };
 		A64E59CA2BC9A6EE427AE08A /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */; };
+		AAFCF922F7E9CACE7BEBAFF8 /* KnockAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A004194A2C8269D37C7E69A9 /* KnockAction.swift */; };
 		B1265EA1BAE7BE5415CF363F /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8D72CEDC8CD69AE5C47AECCC /* AppIcon.icns */; };
 		B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */; };
 		C3C279C9E58704DEBB7D30D0 /* KnockGlowOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0675F9C1C11515BFB58F1EC7 /* KnockGlowOverlay.swift */; };
@@ -61,6 +62,7 @@
 		9308DC0110F85D3166526F13 /* KnockDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockDetector.swift; sourceTree = "<group>"; };
 		9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveBaseline.swift; sourceTree = "<group>"; };
 		9D73580E7B6CDFF33694DEBE /* ShapeAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeAnalyzer.swift; sourceTree = "<group>"; };
+		A004194A2C8269D37C7E69A9 /* KnockAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockAction.swift; sourceTree = "<group>"; };
 		AA68A86045964D1FF5438353 /* KnockMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockMacApp.swift; sourceTree = "<group>"; };
 		ADB0F4167D37B3F576EC74DB /* AccelerometerReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccelerometerReader.swift; sourceTree = "<group>"; };
 		B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotAction.swift; sourceTree = "<group>"; };
@@ -114,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */,
+				A004194A2C8269D37C7E69A9 /* KnockAction.swift */,
 				4483C13338D8663F321A356B /* ScreenCapturePermission.swift */,
 				B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */,
 			);
@@ -289,6 +292,7 @@
 				1F13AF9B9C2DE8C48285CA04 /* CandidateTracker.swift in Sources */,
 				A0767FF5FD79991E21BF7929 /* DoubleKnockMatcher.swift in Sources */,
 				C7945A4DE0B7121F22C49D23 /* InputActivityGate.swift in Sources */,
+				AAFCF922F7E9CACE7BEBAFF8 /* KnockAction.swift in Sources */,
 				732D57353CBC878907D1F288 /* KnockController.swift in Sources */,
 				FADD8BA7464366166C6A936E /* KnockDetector.swift in Sources */,
 				C3C279C9E58704DEBB7D30D0 /* KnockGlowOverlay.swift in Sources */,
