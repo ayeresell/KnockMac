@@ -187,6 +187,24 @@ final class AccelerometerReader {
         print("[Accel] Ready — listening for reports")
     }
 
+    // MARK: Diagnostic
+
+    nonisolated(unsafe) private static var inputValueLogged = false
+    nonisolated(unsafe) private var reportTickCount = 0
+
+    static func logInputValueOnce() {
+        guard !inputValueLogged else { return }
+        inputValueLogged = true
+        print("[Accel] InputValue callback fired (element-level path is alive)")
+    }
+
+    private func diagnosticReportTick(result: IOReturn, length: CFIndex) {
+        reportTickCount += 1
+        if reportTickCount <= 3 || reportTickCount == 100 {
+            print("[Accel] Report #\(reportTickCount) result=0x\(String(result, radix: 16)) length=\(length)")
+        }
+    }
+
     // MARK: Report Parsing
 
     private func handleReport(_ report: UnsafePointer<UInt8>, length: CFIndex) {
