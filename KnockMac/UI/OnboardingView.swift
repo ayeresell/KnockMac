@@ -189,7 +189,7 @@ struct OnboardingView: View {
     @State private var caretOn = true
     @State private var typingHead: Int = 0
     @State private var promptTyped: Int = 0
-    @State private var screenProbeFired: Bool = false
+    @State private var screenModalFired: Bool = false
 
     // Step 2 (Test it out)
     @State private var verifyKnockCount: Int = 0
