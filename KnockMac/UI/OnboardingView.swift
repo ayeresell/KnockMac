@@ -297,6 +297,12 @@ struct OnboardingView: View {
         .onChange(of: hasAccelerometer) { _, ok in
             updateRow(id: "accel", granted: ok, meta: ok ? "@ 100 Hz" : "not found")
         }
+        .onReceive(
+            KnockController.current?.$sensorAvailable.eraseToAnyPublisher()
+                ?? Just(false).eraseToAnyPublisher()
+        ) { ok in
+            if ok && !hasAccelerometer { hasAccelerometer = true }
+        }
     }
 
     private var terminalPanel: some View {
