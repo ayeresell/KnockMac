@@ -7,6 +7,7 @@ enum ActionRegistry {
     static let all: [ActionDescriptor] = [
         ScreenshotAction.descriptor,
         LockScreenAction.descriptor,
+        SwitchKeyboardLayoutAction.descriptor,
         RunShortcutAction.descriptor,
         OpenItemAction.descriptor,
     ]
