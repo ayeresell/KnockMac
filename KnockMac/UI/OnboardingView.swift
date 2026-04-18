@@ -187,6 +187,12 @@ struct OnboardingView: View {
     @State private var typingHead: Int = 0
     @State private var promptTyped: Int = 0
     @State private var screenModalFired: Bool = false
+    // Meta typing is slower than the 35 ms base tick — only advance every
+    // Nth tick. 2 gives ~70 ms per character.
+    @State private var metaTickCounter: Int = 0
+    // Ticks to hold the spinner after meta is fully typed, before swapping
+    // it for OK/ERR. 8 ticks at 35 ms ≈ 280 ms.
+    @State private var statusHoldTicks: Int = 0
 
     // Step 2 (Test it out)
     @State private var verifyKnockCount: Int = 0
