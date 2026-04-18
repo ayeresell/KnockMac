@@ -32,9 +32,12 @@ final class KnockController: ObservableObject {
         }
 
         accelReader.onSample = { [weak self] sample in
-            guard let self, self.isActive else { return }
-            self.knockDetector.feed(sample)
+            guard let self else { return }
+            // Track sensor availability regardless of isActive so the onboarding
+            // System Check can verify the IMU even before permissions are granted.
             if !self.sensorAvailable { self.sensorAvailable = true }
+            guard self.isActive else { return }
+            self.knockDetector.feed(sample)
         }
 
         // Pause main reader when calibration starts to prevent double-processing.
