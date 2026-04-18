@@ -2,6 +2,11 @@ import SwiftUI
 import Combine
 import CoreGraphics
 
+extension Notification.Name {
+    /// Posted once per process when the IMU delivers its first sample.
+    static let sensorAvailable = Notification.Name("KnockMac.SensorAvailable")
+}
+
 @MainActor
 final class KnockController: ObservableObject {
     // Latched flag for late observers (e.g. OnboardingView mounting after
