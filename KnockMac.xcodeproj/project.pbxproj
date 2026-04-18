@@ -12,6 +12,7 @@
 		1F13AF9B9C2DE8C48285CA04 /* CandidateTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C986281E97DD910952B446A /* CandidateTracker.swift */; };
 		4511E01B45C3B4A9FD3A30D9 /* KnockGlowPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30325E2355691C3EB203571F /* KnockGlowPhaseTests.swift */; };
 		4874DF685AC9CF1669C8CD20 /* Placeholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF1108EC81C76695F005910E /* Placeholder.swift */; };
+		4EAD9FC80693E2F13973EBA1 /* RunShortcutAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5858C97985684E937ACF5B80 /* RunShortcutAction.swift */; };
 		53F0F9933102B68C46E3A7CC /* DoubleKnockMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE5AC8CA462EC842FDB74746 /* DoubleKnockMatcherTests.swift */; };
 		5586FCF39C9075C4C7CFE06F /* AdaptiveBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8420B36C4D8F68DC4609BC6 /* AdaptiveBaselineTests.swift */; };
 		732D57353CBC878907D1F288 /* KnockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14150E502C3560D21F6F8FD9 /* KnockController.swift */; };
@@ -57,6 +58,7 @@
 		45C82425A4960CA2F0F7CA47 /* ActionConfigCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionConfigCodableTests.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
 		4C986281E97DD910952B446A /* CandidateTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTracker.swift; sourceTree = "<group>"; };
+		5858C97985684E937ACF5B80 /* RunShortcutAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunShortcutAction.swift; sourceTree = "<group>"; };
 		6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		7098DD185D0005BCD5781516 /* KnockMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KnockMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		71F6AED1D8865FDAAD6B5C03 /* LockScreenAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenAction.swift; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 				EB7BE5A6D1037C7860A2A3B2 /* AudioPlayer.swift */,
 				A004194A2C8269D37C7E69A9 /* KnockAction.swift */,
 				71F6AED1D8865FDAAD6B5C03 /* LockScreenAction.swift */,
+				5858C97985684E937ACF5B80 /* RunShortcutAction.swift */,
 				4483C13338D8663F321A356B /* ScreenCapturePermission.swift */,
 				B0227AF4DD117CB5B966F51C /* ScreenshotAction.swift */,
 			);
@@ -307,6 +310,7 @@
 				DD9E026F05B05FD4CE24DCD2 /* LockScreenAction.swift in Sources */,
 				B1CE227639DA44EE3F05406E /* MenuBarView.swift in Sources */,
 				F24F830E7EBC6A6395BAE7F3 /* OnboardingView.swift in Sources */,
+				4EAD9FC80693E2F13973EBA1 /* RunShortcutAction.swift in Sources */,
 				E7E779B44D1EE4BAFB24365A /* ScreenCapturePermission.swift in Sources */,
 				88A53A8A8C6D4B2127E044D4 /* ScreenshotAction.swift in Sources */,
 				C434BC3B6752F685B6AE1D65 /* ShapeAnalyzer.swift in Sources */,
