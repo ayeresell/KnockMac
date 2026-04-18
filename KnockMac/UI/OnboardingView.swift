@@ -768,10 +768,18 @@ struct OnboardingView: View {
     private func runAnimatedDiagnostic() {
         // Synchronous probes — resolve after brief scan visible window.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-            resolveRow(id: "os", granted: true, meta: SystemInfo.osDescription())
+            let ok = SystemInfo.meetsMinimumOS
+            let meta = ok
+                ? SystemInfo.osDescription()
+                : "\(SystemInfo.osDescription()) — needs macOS \(SystemInfo.minimumMacOSMajor)+"
+            resolveRow(id: "os", granted: ok, meta: meta)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-            resolveRow(id: "cpu", granted: true, meta: SystemInfo.chipDescription())
+            let ok = SystemInfo.isAppleSilicon
+            let meta = ok
+                ? SystemInfo.chipDescription()
+                : "\(SystemInfo.chipDescription()) — Apple Silicon required"
+            resolveRow(id: "cpu", granted: ok, meta: meta)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.95) {
             resolveRow(id: "mem", granted: true, meta: SystemInfo.memoryDescription())
