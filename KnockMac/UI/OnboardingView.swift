@@ -587,27 +587,12 @@ struct OnboardingView: View {
 
     // MARK: Screen-capture plumbing
 
+    // Polls through the same preflight-based check as the initial probe.
+    // Using SCShareableContent here would upgrade the launch-time snapshot
+    // inside ScreenCapturePermission, which masks the restart-required
+    // state right at the moment macOS surfaces its "Quit & Reopen" alert.
     private func refreshScreenCaptureAccess() {
-        Task {
-            let status = await ScreenCapturePermission.currentStatus()
-            await MainActor.run {
-                applyCaptureStatus(status)
-                hasScreenCapture = (status == .granted)
-            }
-        }
-    }
-
-    // When the TCC entry changes mid-session we need the user back in the
-    // wizard no matter how the restart happens (our own button or macOS's
-    // "Quit & Reopen" prompt). Persisting hasCompletedOnboarding=false
-    // immediately ensures showIfNeeded() re-presents onboarding on relaunch.
-    private func applyCaptureStatus(_ status: ScreenCapturePermission.Status) {
-        let restart = (status == .restartRequired)
-        needsCaptureRestart = restart
-        if restart {
-            UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
-            UserDefaults.standard.synchronize()
-        }
+        probeScreenRecording()
     }
 
     private func requestScreenRecordingAccess() {
