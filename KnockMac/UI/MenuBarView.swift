@@ -43,7 +43,8 @@ struct MenuBarView: View {
                     selectAction(descriptor)
                 } label: {
                     HStack {
-                        Image(systemName: selectedActionID == descriptor.id ? "checkmark" : "")
+                        Image(systemName: "checkmark")
+                            .opacity(selectedActionID == descriptor.id ? 1 : 0)
                         Text(menuLabel(for: descriptor))
                     }
                 }
