@@ -574,6 +574,165 @@ struct OnboardingView: View {
         }
     }
 
+    // MARK: Step 3 — Pick your action
+
+    private var pickActionScreen: some View {
+        VStack(spacing: 14) {
+            VStack(spacing: 6) {
+                Text("Pick your action")
+                    .font(.system(size: 28, weight: .bold))
+                    .tracking(-0.5)
+                    .foregroundColor(KM.primary)
+                Text("What should a double-knock do?")
+                    .font(.system(size: 13))
+                    .foregroundColor(KM.muted(0.60))
+            }
+            .padding(.top, 8)
+
+            ScrollView {
+                VStack(spacing: 8) {
+                    ForEach(ActionRegistry.all, id: \.id) { descriptor in
+                        actionCard(descriptor)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .frame(maxHeight: .infinity)
+
+            HStack {
+                Button("Back") {
+                    withAnimation { step = 2 }
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(KM.muted(0.75))
+                .font(.system(size: 13, weight: .semibold))
+                .padding(.vertical, 6)
+
+                Spacer()
+
+                Button("Finish") {
+                    persistSelectedActionAndFinish()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .buttonBorderShape(.capsule)
+                .disabled(!selectedActionIsConfigured)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
+        .padding(.bottom, 20)
+        .transition(.opacity)
+        .onAppear { hydrateActionStateFromDefaults() }
+    }
+
+    @ViewBuilder
+    private func actionCard(_ descriptor: ActionDescriptor) -> some View {
+        let isSelected = selectedActionID == descriptor.id
+
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: descriptor.systemImage)
+                    .font(.system(size: 18))
+                    .foregroundColor(isSelected ? KM.accent : KM.muted(0.65))
+                    .frame(width: 24)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(descriptor.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(KM.primary)
+                    if descriptor.requiresConfiguration {
+                        Text("Requires setup")
+                            .font(.system(size: 11))
+                            .foregroundColor(KM.muted(0.45))
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
+                    .foregroundColor(isSelected ? KM.accent : KM.muted(0.30))
+            }
+            .padding(12)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    selectedActionID = descriptor.id
+                }
+                if descriptor.id == RunShortcutAction.descriptor.id && availableShortcuts.isEmpty {
+                    refreshAvailableShortcuts()
+                }
+            }
+
+            if isSelected && descriptor.requiresConfiguration {
+                Divider().padding(.horizontal, 12)
+                configurator(for: descriptor)
+                    .padding(12)
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(isSelected ? KM.accent.opacity(0.10) : Color.white.opacity(0.03))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(
+                    isSelected ? KM.accent.opacity(0.45) : Color.white.opacity(0.06),
+                    lineWidth: isSelected ? 1 : 0.5
+                )
+        )
+    }
+
+    @ViewBuilder
+    private func configurator(for descriptor: ActionDescriptor) -> some View {
+        if descriptor.id == RunShortcutAction.descriptor.id {
+            VStack(alignment: .leading, spacing: 8) {
+                if availableShortcuts.isEmpty {
+                    Text("No shortcuts found.")
+                        .font(.system(size: 12))
+                        .foregroundColor(KM.muted(0.55))
+                    Button("Open Shortcuts app") {
+                        if let url = URL(string: "shortcuts://") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .controlSize(.small)
+                } else {
+                    Picker("Shortcut", selection: $pendingShortcutName) {
+                        Text("— select —").tag("")
+                        ForEach(availableShortcuts, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
+        } else if descriptor.id == OpenItemAction.descriptor.id {
+            VStack(alignment: .leading, spacing: 8) {
+                Picker("Kind", selection: $pendingOpenKind) {
+                    Text("App").tag(OpenItemAction.Kind.app)
+                    Text("URL").tag(OpenItemAction.Kind.url)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
+                if pendingOpenKind == .app {
+                    HStack {
+                        Text(pendingAppDisplayName.isEmpty ? "No app selected" : pendingAppDisplayName)
+                            .font(.system(size: 12))
+                            .foregroundColor(pendingAppDisplayName.isEmpty ? KM.muted(0.45) : KM.primary)
+                        Spacer()
+                        Button("Choose…") { chooseApp() }
+                            .controlSize(.small)
+                    }
+                } else {
+                    TextField("https://example.com", text: $pendingURLString)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+        }
+    }
+
     // MARK: Computed
 
     private var allResolved: Bool {
