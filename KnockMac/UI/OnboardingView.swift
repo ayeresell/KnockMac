@@ -680,7 +680,6 @@ struct OnboardingView: View {
     private func copyLog() {
         var lines: [String] = ["KnockMac — System Check"]
         for (i, r) in rows.enumerated() {
-            let tag = "[\(r.tag.rawValue)]".padding(toLength: 8, withPad: " ", startingAt: 0)
             let label = r.label.padding(toLength: 26, withPad: " ", startingAt: 0)
             let meta = (r.meta ?? "").padding(toLength: 24, withPad: " ", startingAt: 0)
             let status: String
@@ -689,7 +688,7 @@ struct OnboardingView: View {
             case .err: status = "ERR"
             case .scanning, .pending: status = "..."
             }
-            lines.append(String(format: "%02d %@ %@ %@ %@", i + 1, tag, label, meta, status))
+            lines.append(String(format: "%02d %@ %@ %@", i + 1, label, meta, status))
         }
         lines.append("— \(promptMessage)")
         NSPasteboard.general.clearContents()
