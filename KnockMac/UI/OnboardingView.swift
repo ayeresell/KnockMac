@@ -798,15 +798,12 @@ struct OnboardingView: View {
 
     private func runSystemCheck() {
         guard !hasAccelerometer else { return }
-        sysCheckReader = AccelerometerReader()
-        sysCheckReader?.onSample = { _ in
-            DispatchQueue.main.async {
-                if !self.hasAccelerometer {
-                    self.hasAccelerometer = true
-                    self.sysCheckReader?.stop()
-                    self.sysCheckReader = nil
-                }
-            }
+        // Use the main KnockController's reader instead of spawning a second
+        // AccelerometerReader. Two readers in the same process race for the
+        // HID input-report callback and the System Check loses, falsely
+        // reporting "not found". Live updates arrive via .onReceive below.
+        if KnockController.current?.sensorAvailable == true {
+            hasAccelerometer = true
         }
     }
 
