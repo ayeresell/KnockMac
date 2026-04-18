@@ -1027,10 +1027,18 @@ class OnboardingWindowManager {
 // MARK: - System info readers
 
 enum SystemInfo {
+    // Minimum macOS supported by KnockMac — matches Info.plist deployment
+    // target and the version gate advertised in CLAUDE.md.
+    static let minimumMacOSMajor = 14
+
     static func osDescription() -> String {
         let v = ProcessInfo.processInfo.operatingSystemVersion
         let build = sysctlString("kern.osversion") ?? "?"
         return "macOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion) (\(build))"
+    }
+
+    static var meetsMinimumOS: Bool {
+        ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= minimumMacOSMajor
     }
 
     static func chipDescription() -> String {
@@ -1042,6 +1050,14 @@ enum SystemInfo {
         }
         let total = sysctlInt("hw.physicalcpu") ?? 0
         return total > 0 ? "\(brand) · \(total) cores" : brand
+    }
+
+    // True only on Apple Silicon (M-series). The IMU required for knock
+    // detection doesn't exist on Intel Macs — gating on this lets the
+    // diagnostic fail fast on unsupported hardware instead of timing out
+    // at the accelerometer probe.
+    static var isAppleSilicon: Bool {
+        (sysctlInt("hw.optional.arm64") ?? 0) == 1
     }
 
     static func memoryDescription() -> String {
