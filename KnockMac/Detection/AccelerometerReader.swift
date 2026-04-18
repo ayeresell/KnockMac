@@ -142,9 +142,8 @@ final class AccelerometerReader {
         let reportSize = IOHIDDeviceGetProperty(dev, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? 0
         print("[Accel] Device opened — reportSize=\(reportSize)b")
         // macOS 26+: IMU no longer auto-streams input reports after open. Explicitly
-        // request a 10ms report interval (100 Hz) to kick the SPU pipeline on. The
-        // device may still stream at its native rate (125 Hz / 8ms) — this is a hint.
-        IOHIDDeviceSetProperty(dev, kIOHIDReportIntervalKey as CFString, 10_000 as CFNumber)
+        // request the device's native 8ms interval (125 Hz) to kick the SPU pipeline on.
+        IOHIDDeviceSetProperty(dev, kIOHIDReportIntervalKey as CFString, 8000 as CFNumber)
         IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
 
         // Retain self for the C callback lifetime.
