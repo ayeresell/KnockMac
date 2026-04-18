@@ -467,8 +467,9 @@ struct OnboardingView: View {
 
                 Spacer()
 
-                Button(verifyKnockCount >= 3 ? "Finish" : "Waiting…") {
-                    finishOnboarding()
+                Button(verifyKnockCount >= 3 ? "Next" : "Waiting…") {
+                    stopCalibration()
+                    withAnimation { step = 3 }
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
