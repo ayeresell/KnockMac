@@ -977,13 +977,25 @@ class OnboardingWindowManager {
         // never appears at an off-centre position. `NSWindow.center()`
         // biases upward (Apple's "visually pleasing" placement) which
         // caused a visible jump to true centre after show.
-        if let window, let screen = NSScreen.main {
-            let sf = screen.frame
-            let wf = window.frame
-            window.setFrameOrigin(NSPoint(
-                x: sf.midX - wf.width / 2,
-                y: sf.midY - wf.height / 2
-            ))
+        // Center synchronously *before* makeKeyAndOrderFront so the window
+        // never appears at an off-centre position. Target the screen under
+        // the cursor (not `NSScreen.main`, which on a multi-display setup
+        // is the screen with the menu bar and may not be where the user is
+        // working — e.g., laptop vs external ultrawide). Use `visibleFrame`
+        // so the menu bar / dock don't bias the result.
+        if let window {
+            let cursor = NSEvent.mouseLocation
+            let screen = NSScreen.screens.first(where: { $0.frame.contains(cursor) })
+                ?? NSScreen.main
+            if let screen {
+                let sf = screen.visibleFrame
+                let wf = window.frame
+                let origin = NSPoint(
+                    x: sf.midX - wf.width / 2,
+                    y: sf.midY - wf.height / 2
+                )
+                window.setFrame(NSRect(origin: origin, size: wf.size), display: false)
+            }
         }
 
         // LSUIElement apps relaunched after a TCC "Quit & Reopen" come up as
