@@ -808,7 +808,7 @@ struct OnboardingView: View {
         // AccelerometerReader. Two readers in the same process race for the
         // HID input-report callback and the System Check loses, falsely
         // reporting "not found". Live updates arrive via .onReceive below.
-        if KnockController.current?.sensorAvailable == true {
+        if KnockController.sensorEverAvailable {
             hasAccelerometer = true
         }
     }
