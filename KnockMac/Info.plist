@@ -28,5 +28,9 @@
 	<string>Copyright © 2025 KnockMac</string>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>KnockMac needs screen recording access to take screenshots when you knock.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>KnockMac reads the built-in accelerometer to detect double-knocks on the laptop body.</string>
+	<key>NSInputMonitoringUsageDescription</key>
+	<string>KnockMac reads raw accelerometer HID reports to detect knocks.</string>
 </dict>
 </plist>
