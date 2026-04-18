@@ -953,10 +953,22 @@ class OnboardingWindowManager {
             newWindow.isOpaque = false
             newWindow.hasShadow = true
 
-            newWindow.center()
             self.window = newWindow
         } else {
             window?.title = title
+        }
+
+        // Center synchronously *before* makeKeyAndOrderFront so the window
+        // never appears at an off-centre position. `NSWindow.center()`
+        // biases upward (Apple's "visually pleasing" placement) which
+        // caused a visible jump to true centre after show.
+        if let window, let screen = NSScreen.main {
+            let sf = screen.frame
+            let wf = window.frame
+            window.setFrameOrigin(NSPoint(
+                x: sf.midX - wf.width / 2,
+                y: sf.midY - wf.height / 2
+            ))
         }
 
         // LSUIElement apps relaunched after a TCC "Quit & Reopen" come up as
@@ -967,17 +979,6 @@ class OnboardingWindowManager {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
         window?.orderFrontRegardless()
-        DispatchQueue.main.async {
-            if let window = self.window, let screen = window.screen ?? NSScreen.main {
-                let screenFrame = screen.frame
-                let windowFrame = window.frame
-                let x = screenFrame.midX - windowFrame.width / 2
-                let y = screenFrame.midY - windowFrame.height / 2
-                window.setFrameOrigin(NSPoint(x: x, y: y))
-            }
-            NSApp.activate(ignoringOtherApps: true)
-            self.window?.makeKeyAndOrderFront(nil)
-        }
     }
 }
 
