@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09DB248F350685DD9A9277C5 /* ActionConfigCodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C82425A4960CA2F0F7CA47 /* ActionConfigCodableTests.swift */; };
 		1E2712CE265682F72312837F /* AdaptiveBaseline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9642485AB27CA11526DF2A2A /* AdaptiveBaseline.swift */; };
 		1F13AF9B9C2DE8C48285CA04 /* CandidateTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C986281E97DD910952B446A /* CandidateTracker.swift */; };
 		4511E01B45C3B4A9FD3A30D9 /* KnockGlowPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30325E2355691C3EB203571F /* KnockGlowPhaseTests.swift */; };
@@ -53,6 +54,7 @@
 		30325E2355691C3EB203571F /* KnockGlowPhaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnockGlowPhaseTests.swift; sourceTree = "<group>"; };
 		335D88182787E06CBE84A200 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		4483C13338D8663F321A356B /* ScreenCapturePermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapturePermission.swift; sourceTree = "<group>"; };
+		45C82425A4960CA2F0F7CA47 /* ActionConfigCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionConfigCodableTests.swift; sourceTree = "<group>"; };
 		49389A10BBE447E62F0786AD /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ScreenCaptureKit.framework; sourceTree = "<group>"; };
 		4C986281E97DD910952B446A /* CandidateTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateTracker.swift; sourceTree = "<group>"; };
 		6E9B40F265FBE182D1DCA5BF /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 		C59ADC22C6239FE837B50C45 /* KnockMacTests */ = {
 			isa = PBXGroup;
 			children = (
+				45C82425A4960CA2F0F7CA47 /* ActionConfigCodableTests.swift */,
 				B8420B36C4D8F68DC4609BC6 /* AdaptiveBaselineTests.swift */,
 				2947F5853CBD4C713F2BAA33 /* CandidateTrackerTests.swift */,
 				BE5AC8CA462EC842FDB74746 /* DoubleKnockMatcherTests.swift */,
@@ -276,6 +279,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09DB248F350685DD9A9277C5 /* ActionConfigCodableTests.swift in Sources */,
 				5586FCF39C9075C4C7CFE06F /* AdaptiveBaselineTests.swift in Sources */,
 				CFE0F0EE572E23F98DAF56CF /* CandidateTrackerTests.swift in Sources */,
 				53F0F9933102B68C46E3A7CC /* DoubleKnockMatcherTests.swift in Sources */,
