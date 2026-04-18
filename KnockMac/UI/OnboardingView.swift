@@ -710,41 +710,39 @@ struct OnboardingView: View {
     // MARK: Diagnostic sequence
 
     private func advanceTyping() {
-        // Strictly serial flow: one row fully completes (label → spinner
-        // while meta types → status) before the next row is revealed.
+        // Labels are printed up-front in onAppear, so this routine only
+        // handles Phase B: serially type each row's meta, then hold the
+        // spinner briefly before swapping it for OK/ERR.
         if typingHead < rows.count {
-            // Reveal the row if it hasn't been already. Label typing starts
-            // immediately; the spinner only appears once the label finishes.
-            if !rows[typingHead].visible {
-                rows[typingHead].visible = true
-                if rows[typingHead].status == .pending {
-                    rows[typingHead].status = .scanning
-                }
-            }
-
-            // Phase A: type the label char by char.
-            if rows[typingHead].typed < rows[typingHead].phaseAChars {
-                rows[typingHead].typed += 1
-                return
-            }
-
-            // Label is done. If the probe hasn't resolved yet, hold here —
-            // the spinner keeps ticking until the meta string is known.
-            // The listener row arms synchronously from this gate check so it
-            // can start typing as soon as we land on it.
+            // Wait for the probe to resolve. The listener row arms inside
+            // maybeArmListener once all prereqs above it have their status
+            // revealed, so calling it here lets the row unblock naturally.
             if rows[typingHead].status == .scanning || rows[typingHead].status == .pending {
                 maybeArmListener()
                 return
             }
 
-            // Phase B: type the meta char by char. Spinner keeps spinning
-            // until meta is fully typed (handled in the view).
+            // Meta typing — slower than the base tick rate.
             if rows[typingHead].typed < rows[typingHead].fullChars {
-                rows[typingHead].typed += 1
+                metaTickCounter += 1
+                if metaTickCounter % 2 == 0 {
+                    rows[typingHead].typed += 1
+                }
                 return
             }
 
-            // Row is fully typed — move on to the next one.
+            // Meta is fully typed — hold the spinner for a beat so the
+            // transition from loading to status doesn't feel abrupt.
+            if statusHoldTicks < 8 {
+                statusHoldTicks += 1
+                return
+            }
+
+            // Reveal status + move on to the next row.
+            withAnimation(.easeOut(duration: 0.18)) {
+                rows[typingHead].statusRevealed = true
+            }
+            statusHoldTicks = 0
             typingHead += 1
             return
         }
