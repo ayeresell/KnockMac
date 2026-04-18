@@ -981,21 +981,15 @@ class OnboardingWindowManager {
         }
 
         // Center synchronously *before* makeKeyAndOrderFront so the window
-        // never appears at an off-centre position. `NSWindow.center()`
-        // biases upward (Apple's "visually pleasing" placement) which
-        // caused a visible jump to true centre after show.
-        // Center synchronously *before* makeKeyAndOrderFront so the window
-        // never appears at an off-centre position. Target the screen under
-        // the cursor (not `NSScreen.main`, which on a multi-display setup
-        // is the screen with the menu bar). Use full `frame` (not
-        // `visibleFrame`) so the dock/menu bar don't pull the centre point
-        // off true geometric centre.
+        // never appears at an off-centre position. Use `visibleFrame` so the
+        // window is centered in the usable area (excluding menu bar and dock)
+        // — this matches what users perceive as "centered on screen".
         if let window {
             let cursor = NSEvent.mouseLocation
             let screen = NSScreen.screens.first(where: { $0.frame.contains(cursor) })
                 ?? NSScreen.main
             if let screen {
-                let sf = screen.frame
+                let sf = screen.visibleFrame
                 let wf = window.frame
                 let origin = NSPoint(
                     x: sf.origin.x + (sf.width  - wf.width)  / 2,
