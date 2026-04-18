@@ -758,12 +758,34 @@ struct OnboardingView: View {
 
     // MARK: Screen-capture plumbing
 
-    // Polls through the same preflight-based check as the initial probe.
-    // Using SCShareableContent here would upgrade the launch-time snapshot
-    // inside ScreenCapturePermission, which masks the restart-required
-    // state right at the moment macOS surfaces its "Quit & Reopen" alert.
+    // CGPreflightScreenCaptureAccess is cached per-process and stops
+    // reflecting TCC changes after the first read, so we can't use the
+    // initial probe here. liveStatus() hits SCShareableContent (the
+    // authoritative check) without upgrading the launch snapshot, which
+    // lets us surface "restart required" the moment macOS shows its own
+    // "Quit & Reopen" alert.
     private func refreshScreenCaptureAccess() {
-        probeScreenRecording()
+        Task {
+            let status = await ScreenCapturePermission.liveStatus()
+            await MainActor.run {
+                applyLiveStatus(status)
+            }
+        }
+    }
+
+    private func applyLiveStatus(_ status: ScreenCapturePermission.Status) {
+        let granted = (status == .granted)
+        let restartNeeded = (status == .restartRequired)
+        hasScreenCapture = granted
+        needsCaptureRestart = restartNeeded
+        if restartNeeded {
+            UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+            UserDefaults.standard.synchronize()
+        }
+        let meta = granted
+            ? "granted"
+            : (restartNeeded ? "restart required" : "permission required")
+        updateRow(id: "screen", granted: granted, meta: meta)
     }
 
     private func requestScreenRecordingAccess() {
