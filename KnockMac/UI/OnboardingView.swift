@@ -52,6 +52,9 @@ struct TerminalRow: Identifiable, Equatable {
     var status: RowStatus = .pending
     var visible: Bool = false
     var typed: Int = 0  // Phase A char count: idx (2) + label.count
+    // Flips to true after meta has fully typed and a small hold has elapsed —
+    // this is what replaces the spinner with the OK/ERR status text.
+    var statusRevealed: Bool = false
 
     // Chars that get typed in Phase A — just the identity columns.
     var phaseAChars: Int { 2 + label.count }
