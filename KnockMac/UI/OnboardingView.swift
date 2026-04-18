@@ -988,13 +988,28 @@ class OnboardingWindowManager {
             window?.title = title
         }
 
-        // Center synchronously *before* makeKeyAndOrderFront so the window
-        // never appears at an off-centre position. Use `visibleFrame` so the
-        // window is centered in the usable area (excluding menu bar and dock)
-        // — this matches what users perceive as "centered on screen".
+        // Pre-size the window to the exact content size we expect. Relying on
+        // `window.frame` before the hosting controller has laid out can return
+        // the initial contentRect-derived frame which mis-centres the window.
         if let window {
-            let cursor = NSEvent.mouseLocation
-            let screen = NSScreen.screens.first(where: { $0.frame.contains(cursor) })
+            window.setContentSize(NSSize(width: 460, height: 480))
+        }
+
+        // LSUIElement apps relaunched after a TCC "Quit & Reopen" come up as
+        // a background accessory with no Dock tile — NSApp.activate then does
+        // nothing and the onboarding window stays hidden. Temporarily promote
+        // to .regular so the window can take focus; closeWindow() reverts.
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        window?.makeKeyAndOrderFront(nil)
+        window?.orderFrontRegardless()
+
+        // Center *after* orderFront so `window.frame` reflects the final size
+        // after hosting-controller layout. Use `visibleFrame` so the window
+        // sits in the usable area (above the dock, below the menu bar).
+        if let window {
+            let screen = window.screen
+                ?? NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) })
                 ?? NSScreen.main
             if let screen {
                 let sf = screen.visibleFrame
@@ -1006,15 +1021,6 @@ class OnboardingWindowManager {
                 window.setFrameOrigin(origin)
             }
         }
-
-        // LSUIElement apps relaunched after a TCC "Quit & Reopen" come up as
-        // a background accessory with no Dock tile — NSApp.activate then does
-        // nothing and the onboarding window stays hidden. Temporarily promote
-        // to .regular so the window can take focus; closeWindow() reverts.
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        window?.makeKeyAndOrderFront(nil)
-        window?.orderFrontRegardless()
     }
 }
 
