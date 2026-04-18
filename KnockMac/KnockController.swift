@@ -59,6 +59,6 @@ final class KnockController: ObservableObject {
         lastKnockTime = Date()
         KnockGlowWindowController.shared.flash()
         audioPlayer.playKnockSound()
-        ScreenshotAction.captureFullScreen()
+        ActionRegistry.current().perform()
     }
 }
