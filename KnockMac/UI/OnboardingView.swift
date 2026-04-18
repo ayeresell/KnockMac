@@ -51,10 +51,10 @@ struct TerminalRow: Identifiable, Equatable {
     var meta: String? = nil
     var status: RowStatus = .pending
     var visible: Bool = false
-    var typed: Int = 0  // Phase A char count: idx (2) + tag (7) + label.count
+    var typed: Int = 0  // Phase A char count: idx (2) + label.count
 
     // Chars that get typed in Phase A — just the identity columns.
-    var phaseAChars: Int { 2 + 7 + label.count }
+    var phaseAChars: Int { 2 + label.count }
     var phaseADone: Bool { typed >= phaseAChars }
 
     var statusText: String {
