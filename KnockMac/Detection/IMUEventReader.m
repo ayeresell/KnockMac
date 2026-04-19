@@ -26,16 +26,17 @@ extern double IOHIDEventGetFloatValue(IOHIDEventRef, uint32_t field);
 #define IMU_PAGE_FF00     0xff00
 #define IMU_USAGE_ACCEL   0x3
 
-// Module state. We only support a single active reader at a time.
-static IOHIDEventSystemClientRef g_client;
-static IMUSampleCallback         g_callback;
-static void                      *g_context;
+struct IMUEventReader {
+    IOHIDEventSystemClientRef client;
+    IMUSampleCallback         callback;
+    void                      *context;
+};
 
 static void hidEventCallback(void *target, void *refcon,
                              IOHIDServiceClientRef sender, IOHIDEventRef event) {
-    IMUSampleCallback cb = g_callback;
-    void *ctx = g_context;
-    if (!cb || !event) return;
+    if (!refcon || !event) return;
+    IMUEventReaderRef reader = (IMUEventReaderRef)refcon;
+    if (!reader->callback) return;
 
     // Field encoding: (eventType << 16) | axisIndex
     // For Accelerometer events on macOS 26 the type id is 13.
@@ -45,7 +46,7 @@ static void hidEventCallback(void *target, void *refcon,
     double y = IOHIDEventGetFloatValue(event, (type << 16) | 1);
     double z = IOHIDEventGetFloatValue(event, (type << 16) | 2);
 
-    cb(x, y, z, ctx);
+    reader->callback(x, y, z, reader->context);
 }
 
 // Walk the service list, find page=0xff00 usage=3, and write properties
@@ -83,37 +84,40 @@ static int kickIMUService(IOHIDEventSystemClientRef client) {
     return kicked;
 }
 
-int IMUEventStartStreaming(IMUSampleCallback cb, void *context) {
-    if (g_client)  return -1;
+IMUEventReaderRef IMUEventReaderCreate(IMUSampleCallback cb, void *context) {
+    if (!cb) return NULL;
 
-    g_client = IOHIDEventSystemClientCreate(kCFAllocatorDefault);
-    if (!g_client) return -2;
+    IOHIDEventSystemClientRef client = IOHIDEventSystemClientCreate(kCFAllocatorDefault);
+    if (!client) return NULL;
 
-    if (!kickIMUService(g_client)) {
-        CFRelease(g_client);
-        g_client = NULL;
-        return -4;
+    if (!kickIMUService(client)) {
+        CFRelease(client);
+        return NULL;
     }
 
-    g_callback = cb;
-    g_context  = context;
+    IMUEventReaderRef reader = (IMUEventReaderRef)calloc(1, sizeof(struct IMUEventReader));
+    reader->client   = client;
+    reader->callback = cb;
+    reader->context  = context;
 
     NSDictionary *match = @{
         @"PrimaryUsagePage": @(IMU_PAGE_FF00),
         @"PrimaryUsage":     @(IMU_USAGE_ACCEL),
     };
-    IOHIDEventSystemClientSetMatching(g_client, (__bridge CFDictionaryRef)match);
-    IOHIDEventSystemClientRegisterEventCallback(g_client, hidEventCallback, NULL, NULL);
-    IOHIDEventSystemClientScheduleWithDispatchQueue(g_client, dispatch_get_main_queue());
+    IOHIDEventSystemClientSetMatching(client, (__bridge CFDictionaryRef)match);
+    IOHIDEventSystemClientRegisterEventCallback(client, hidEventCallback, NULL, reader);
+    IOHIDEventSystemClientScheduleWithDispatchQueue(client, dispatch_get_main_queue());
 
-    return 0;
+    return reader;
 }
 
-void IMUEventStopStreaming(void) {
-    if (!g_client) return;
-    IOHIDEventSystemClientUnscheduleFromDispatchQueue(g_client, dispatch_get_main_queue());
-    CFRelease(g_client);
-    g_client   = NULL;
-    g_callback = NULL;
-    g_context  = NULL;
+void IMUEventReaderDestroy(IMUEventReaderRef reader) {
+    if (!reader) return;
+    if (reader->client) {
+        IOHIDEventSystemClientUnscheduleFromDispatchQueue(reader->client, dispatch_get_main_queue());
+        CFRelease(reader->client);
+    }
+    reader->callback = NULL;
+    reader->context  = NULL;
+    free(reader);
 }
