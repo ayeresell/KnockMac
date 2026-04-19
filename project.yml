@@ -37,6 +37,8 @@ targets:
         PRODUCT_NAME: KnockMac
         INFOPLIST_FILE: KnockMac/Info.plist
         CODE_SIGN_ENTITLEMENTS: KnockMac/KnockMac.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: KnockMac/KnockMac-Bridging-Header.h
+        CLANG_ENABLE_MODULES: YES
     dependencies:
       - framework: IOKit.framework
         embed: false

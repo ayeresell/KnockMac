@@ -1,0 +1,119 @@
+#import "IMUEventReader.h"
+#import <Foundation/Foundation.h>
+
+// Private IOHIDEventSystemClient API forward declarations.
+// These symbols are exported from IOKit.framework but not in any public header.
+typedef struct __IOHIDEventSystemClient * IOHIDEventSystemClientRef;
+typedef struct __IOHIDServiceClient      * IOHIDServiceClientRef;
+typedef struct __IOHIDEvent              * IOHIDEventRef;
+typedef void (*IOHIDEventSystemClientEventCallback)(void *target, void *refcon,
+                                                    IOHIDServiceClientRef sender,
+                                                    IOHIDEventRef event);
+
+extern IOHIDEventSystemClientRef IOHIDEventSystemClientCreate(CFAllocatorRef);
+extern void IOHIDEventSystemClientSetMatching(IOHIDEventSystemClientRef, CFDictionaryRef);
+extern void IOHIDEventSystemClientRegisterEventCallback(IOHIDEventSystemClientRef,
+                                                        IOHIDEventSystemClientEventCallback,
+                                                        void *target, void *refcon);
+extern void IOHIDEventSystemClientScheduleWithDispatchQueue(IOHIDEventSystemClientRef, dispatch_queue_t);
+extern void IOHIDEventSystemClientUnscheduleFromDispatchQueue(IOHIDEventSystemClientRef, dispatch_queue_t);
+extern CFArrayRef IOHIDEventSystemClientCopyServices(IOHIDEventSystemClientRef);
+extern CFTypeRef IOHIDServiceClientCopyProperty(IOHIDServiceClientRef, CFStringRef);
+extern Boolean IOHIDServiceClientSetProperty(IOHIDServiceClientRef, CFStringRef, CFTypeRef);
+extern uint32_t IOHIDEventGetType(IOHIDEventRef);
+extern double IOHIDEventGetFloatValue(IOHIDEventRef, uint32_t field);
+
+#define IMU_PAGE_FF00     0xff00
+#define IMU_USAGE_ACCEL   0x3
+
+// Module state. We only support a single active reader at a time.
+static IOHIDEventSystemClientRef g_client;
+static IMUSampleCallback         g_callback;
+static void                      *g_context;
+
+static void hidEventCallback(void *target, void *refcon,
+                             IOHIDServiceClientRef sender, IOHIDEventRef event) {
+    IMUSampleCallback cb = g_callback;
+    void *ctx = g_context;
+    if (!cb || !event) return;
+
+    // Field encoding: (eventType << 16) | axisIndex
+    // For Accelerometer events on macOS 26 the type id is 13.
+    // Reading by the actual reported type makes us resilient to numbering changes.
+    uint32_t type = IOHIDEventGetType(event);
+    double x = IOHIDEventGetFloatValue(event, (type << 16) | 0);
+    double y = IOHIDEventGetFloatValue(event, (type << 16) | 1);
+    double z = IOHIDEventGetFloatValue(event, (type << 16) | 2);
+
+    cb(x, y, z, ctx);
+}
+
+// Walk the service list, find page=0xff00 usage=3, and write properties
+// that wake the SPU streaming pipeline. Returns 1 if kicked, 0 otherwise.
+static int kickIMUService(IOHIDEventSystemClientRef client) {
+    CFArrayRef services = IOHIDEventSystemClientCopyServices(client);
+    if (!services) return 0;
+
+    int32_t intervalUs = 8000; // 125 Hz native rate
+    CFNumberRef nv = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &intervalUs);
+
+    int kicked = 0;
+    for (CFIndex i = 0; i < CFArrayGetCount(services); i++) {
+        IOHIDServiceClientRef svc = (IOHIDServiceClientRef)CFArrayGetValueAtIndex(services, i);
+        CFTypeRef pageR = IOHIDServiceClientCopyProperty(svc, CFSTR("PrimaryUsagePage"));
+        CFTypeRef usageR = IOHIDServiceClientCopyProperty(svc, CFSTR("PrimaryUsage"));
+        long page = 0, usage = 0;
+        if (pageR)  { CFNumberGetValue((CFNumberRef)pageR, kCFNumberLongType, &page); CFRelease(pageR); }
+        if (usageR) { CFNumberGetValue((CFNumberRef)usageR, kCFNumberLongType, &usage); CFRelease(usageR); }
+        if (page == IMU_PAGE_FF00 && usage == IMU_USAGE_ACCEL) {
+            // Empirically: writing these four properties is the only reliable
+            // way to start the IMU stream on macOS 26.x. Most are no-ops on
+            // their own, but the combination triggers the SPU pipeline.
+            IOHIDServiceClientSetProperty(svc, CFSTR("ReportInterval"), nv);
+            IOHIDServiceClientSetProperty(svc, CFSTR("BatchInterval"),  nv);
+            IOHIDServiceClientSetProperty(svc, CFSTR("Activated"),       nv);
+            IOHIDServiceClientSetProperty(svc, CFSTR("ClientPolicy"),    nv);
+            kicked = 1;
+            break;
+        }
+    }
+
+    CFRelease(nv);
+    CFRelease(services);
+    return kicked;
+}
+
+int IMUEventStartStreaming(IMUSampleCallback cb, void *context) {
+    if (g_client)  return -1;
+
+    g_client = IOHIDEventSystemClientCreate(kCFAllocatorDefault);
+    if (!g_client) return -2;
+
+    if (!kickIMUService(g_client)) {
+        CFRelease(g_client);
+        g_client = NULL;
+        return -4;
+    }
+
+    g_callback = cb;
+    g_context  = context;
+
+    NSDictionary *match = @{
+        @"PrimaryUsagePage": @(IMU_PAGE_FF00),
+        @"PrimaryUsage":     @(IMU_USAGE_ACCEL),
+    };
+    IOHIDEventSystemClientSetMatching(g_client, (__bridge CFDictionaryRef)match);
+    IOHIDEventSystemClientRegisterEventCallback(g_client, hidEventCallback, NULL, NULL);
+    IOHIDEventSystemClientScheduleWithDispatchQueue(g_client, dispatch_get_main_queue());
+
+    return 0;
+}
+
+void IMUEventStopStreaming(void) {
+    if (!g_client) return;
+    IOHIDEventSystemClientUnscheduleFromDispatchQueue(g_client, dispatch_get_main_queue());
+    CFRelease(g_client);
+    g_client   = NULL;
+    g_callback = NULL;
+    g_context  = NULL;
+}
