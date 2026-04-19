@@ -1,20 +1,20 @@
 import Foundation
-import IOKit
-import IOKit.hid
 
-// Reads raw accelerometer data from the Apple Silicon SPU IMU (Bosch BMI286).
-// Device: vendor 0x05AC, product 0x8104, usagePage 0xFF00, usage 0x03
-// Reports: 22 bytes, XYZ as Int32 LE at offsets 6 / 10 / 14, scale ÷ 65536 → g
+// Reads accelerometer data on Apple Silicon Macs via the IOHIDEventSystemClient
+// path (private API, exposed through IMUEventReader.m bridge).
 //
-// Architecture mirrors taigrr/spank (Go) and olvvier/apple-silicon-accelerometer.
-
-private let kHIDNoOptions = IOOptionBits(kIOHIDOptionsTypeNone)
+// On macOS 26.4+ the public IOHIDDevice + InputReportCallback path no longer
+// receives input reports for the SPU IMU even after IOHIDDeviceOpen succeeds.
+// The IOHIDEventSystemClient path is the only one that delivers events, and
+// requires a "kick" via SetProperty on the IOHIDServiceClient to wake the
+// SPU streaming pipeline. See IMUEventReader.m for the bridge.
+//
+// Events arrive at ~140 Hz with x/y/z already in units of g.
 
 struct AccelSample {
     let x: Double
     let y: Double
     let z: Double
-    // Pre-computed once on creation — magnitude is accessed by every detection algorithm.
     let magnitude: Double
 
     init(x: Double, y: Double, z: Double) {
@@ -34,194 +34,74 @@ final class AccelerometerReader {
     private(set) var isAvailable = false
 
     // MARK: Private
-    // nonisolated(unsafe) — accessed from the C HID callback (not on main actor)
-
-    nonisolated(unsafe) private var manager: IOHIDManager?
-    nonisolated(unsafe) private var device: IOHIDDevice?
-
-    // Fixed-size buffer allocated once — safe to pass as IOKit-owned storage.
-    // Swift Array is not safe here: COW can invalidate the internal pointer mid-write.
-    nonisolated(unsafe) private let reportBufferPtr: UnsafeMutablePointer<UInt8> = .allocate(capacity: 64)
-    private let reportBufferSize = 64
-
-
     // Retained reference passed into the C callback to guarantee self outlives it.
     nonisolated(unsafe) private var retainedSelf: Unmanaged<AccelerometerReader>?
+    private var started = false
 
     // MARK: Lifecycle
 
     init() {
-        setupManager()
+        start()
     }
 
     deinit {
-        // Release the retained reference taken in openDevice, then free the buffer.
+        IMUEventStopStreaming()
         retainedSelf?.release()
         retainedSelf = nil
-        reportBufferPtr.deallocate()
-
-        if let dev = device {
-            IOHIDDeviceClose(dev, kHIDNoOptions)
-        }
-        if let mgr = manager {
-            IOHIDManagerClose(mgr, kHIDNoOptions)
-        }
     }
 
     // MARK: Control
 
-    /// Re-opens and re-registers the HID callback.
-    /// Call this whenever another reader may have stolen the device callback (e.g. after calibration).
+    /// Re-establishes streaming. Used after onboarding's calibration reader
+    /// finishes — both readers can coexist on Event System path, but rebind
+    /// preserves the old API contract from the IOHIDDevice-era reader.
     func rebind() {
-        if let dev = device {
-            IOHIDDeviceRegisterInputReportCallback(dev, reportBufferPtr, CFIndex(reportBufferSize), nil, nil)
-            IOHIDDeviceClose(dev, kHIDNoOptions)
-            device = nil
-            isAvailable = false
-            retainedSelf?.release()
-            retainedSelf = nil
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.bindDevice()
+        stop()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.start()
         }
     }
 
     func stop() {
-        guard let dev = device else { return }
-        // Deregister callback before closing to prevent callbacks firing into freed memory.
-        IOHIDDeviceRegisterInputReportCallback(dev, reportBufferPtr, CFIndex(reportBufferSize), nil, nil)
-        IOHIDDeviceClose(dev, kHIDNoOptions)
-        device = nil
-        isAvailable = false
-
-        // Release the retained self reference now that the callback is unregistered.
+        guard started else { return }
+        IMUEventStopStreaming()
         retainedSelf?.release()
         retainedSelf = nil
+        started = false
+        isAvailable = false
     }
 
     // MARK: Setup
 
-    private func setupManager() {
-        let mgr = IOHIDManagerCreate(kCFAllocatorDefault, kHIDNoOptions)
-        let matching: [String: Any] = [
-            kIOHIDVendorIDKey  as String:       0x05AC,
-            kIOHIDProductIDKey as String:       0x8104,
-            kIOHIDDeviceUsagePageKey as String: 0xFF00,
-            kIOHIDDeviceUsageKey as String:     0x03,
-        ]
-        IOHIDManagerSetDeviceMatching(mgr, matching as CFDictionary)
-        IOHIDManagerScheduleWithRunLoop(mgr, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
-        IOHIDManagerOpen(mgr, kHIDNoOptions)
-        self.manager = mgr
+    private func start() {
+        guard !started else { return }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.bindDevice()
-        }
-    }
-
-    private func bindDevice() {
-        guard let mgr = manager,
-              let set = IOHIDManagerCopyDevices(mgr) as? Set<IOHIDDevice>
-        else { return }
-
-        // Prefer the 22-byte report device (the actual IMU)
-        let dev: IOHIDDevice? = set.first(where: {
-            (IOHIDDeviceGetProperty($0, kIOHIDMaxInputReportSizeKey as CFString) as? Int) == 22
-        }) ?? set.first
-
-        guard let dev else { return }
-        openDevice(dev)
-    }
-
-    private func openDevice(_ dev: IOHIDDevice) {
-        let openResult = IOHIDDeviceOpen(dev, kHIDNoOptions)
-        guard openResult == kIOReturnSuccess else {
-            print("[Accel] Failed to open device: 0x\(String(openResult, radix: 16))")
-            return
-        }
-        let reportSize = IOHIDDeviceGetProperty(dev, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? 0
-        let usagePage = IOHIDDeviceGetProperty(dev, kIOHIDPrimaryUsagePageKey as CFString) as? Int ?? 0
-        let usage = IOHIDDeviceGetProperty(dev, kIOHIDPrimaryUsageKey as CFString) as? Int ?? 0
-        print("[Accel] Device opened — reportSize=\(reportSize)b usagePage=0x\(String(usagePage, radix: 16)) usage=0x\(String(usage, radix: 16))")
-
-        let currentInterval = IOHIDDeviceGetProperty(dev, kIOHIDReportIntervalKey as CFString) as? Int
-        let setResult = IOHIDDeviceSetProperty(dev, kIOHIDReportIntervalKey as CFString, 8000 as CFNumber)
-        let newInterval = IOHIDDeviceGetProperty(dev, kIOHIDReportIntervalKey as CFString) as? Int
-        print("[Accel] ReportInterval before=\(currentInterval ?? -1) setOK=\(setResult) after=\(newInterval ?? -1)")
-
-        IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
-
-        // Retain self for the C callback lifetime.
-        // Balanced by release() in stop() or deinit.
         let retained = Unmanaged.passRetained(self)
-        self.retainedSelf = retained
+        retainedSelf = retained
 
-        IOHIDDeviceRegisterInputReportCallback(
-            dev, reportBufferPtr, CFIndex(reportBufferSize),
-            { ctx, result, _, _, _, report, length in
-                guard let ctx else { return }
-                let reader = Unmanaged<AccelerometerReader>.fromOpaque(ctx).takeUnretainedValue()
-                MainActor.assumeIsolated {
-                    reader.diagnosticReportTick(result: result, length: length)
-                    guard length >= 18 else { return }
-                    reader.handleReport(report, length: length)
-                }
-            },
-            retained.toOpaque()
-        )
-
-        // Secondary path: element-level value callback. If raw input reports are
-        // filtered but parsed elements still arrive, this will fire.
-        IOHIDDeviceRegisterInputValueCallback(
-            dev,
-            { _, _, _, _ in
-                MainActor.assumeIsolated {
-                    AccelerometerReader.logInputValueOnce()
-                }
-            },
-            nil
-        )
-
-        device = dev
-        isAvailable = true
-        print("[Accel] Ready — listening for reports")
-    }
-
-    // MARK: Diagnostic
-
-    nonisolated(unsafe) private static var inputValueLogged = false
-    nonisolated(unsafe) private var reportTickCount = 0
-
-    static func logInputValueOnce() {
-        guard !inputValueLogged else { return }
-        inputValueLogged = true
-        print("[Accel] InputValue callback fired (element-level path is alive)")
-    }
-
-    private func diagnosticReportTick(result: IOReturn, length: CFIndex) {
-        reportTickCount += 1
-        if reportTickCount <= 3 || reportTickCount == 100 {
-            print("[Accel] Report #\(reportTickCount) result=0x\(String(result, radix: 16)) length=\(length)")
-        }
-    }
-
-    // MARK: Report Parsing
-
-    private func handleReport(_ report: UnsafePointer<UInt8>, length: CFIndex) {
-        func int32(at offset: Int) -> Int32 {
-            var v: Int32 = 0
-            withUnsafeMutableBytes(of: &v) {
-                $0.copyBytes(from: UnsafeRawBufferPointer(start: report.advanced(by: offset), count: 4))
+        let result = IMUEventStartStreaming({ x, y, z, ctx in
+            guard let ctx else { return }
+            // Callback fires on the main dispatch queue (set in IMUEventReader.m).
+            // Safe to assume MainActor isolation.
+            let reader = Unmanaged<AccelerometerReader>.fromOpaque(ctx).takeUnretainedValue()
+            MainActor.assumeIsolated {
+                reader.handleSample(x: x, y: y, z: z)
             }
-            return v
+        }, retained.toOpaque())
+
+        if result == 0 {
+            started = true
+            print("[Accel] IMU Event System streaming started (private API)")
+        } else {
+            // Failure — release the retained self since the callback will never fire.
+            retained.release()
+            retainedSelf = nil
+            print("[Accel] IMUEventStartStreaming failed with code \(result)")
         }
+    }
 
-        let sample = AccelSample(
-            x: Double(int32(at: 6))  / 65536.0,
-            y: Double(int32(at: 10)) / 65536.0,
-            z: Double(int32(at: 14)) / 65536.0
-        )
-
-        onSample?(sample)
+    private func handleSample(x: Double, y: Double, z: Double) {
+        if !isAvailable { isAvailable = true }
+        onSample?(AccelSample(x: x, y: y, z: z))
     }
 }
