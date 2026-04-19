@@ -7,6 +7,9 @@
 // the IOHIDServiceClient — to wake the SPU streaming pipeline. After the kick,
 // IOHIDEvents of type kIOHIDEventTypeAccelerometer (= 13 on macOS 26) arrive
 // at ~140 Hz with x/y/z in units of g.
+//
+// Instance-based: each reader owns its own IOHIDEventSystemClient, so multiple
+// readers (e.g. main + onboarding calibration) can coexist.
 
 #ifndef IMUEventReader_h
 #define IMUEventReader_h
@@ -19,15 +22,17 @@ extern "C" {
 /// Always invoked on the main dispatch queue.
 typedef void (*IMUSampleCallback)(double x, double y, double z, void *context);
 
-/// Starts streaming. Returns 0 on success, negative on failure:
-///   -1: already running
-///   -2: IOHIDEventSystemClientCreate failed
-///   -3: IOHIDEventSystemClientCopyServices returned NULL
-///   -4: IMU service (page=0xff00 usage=3) not found
-int IMUEventStartStreaming(IMUSampleCallback cb, void *context);
+/// Opaque handle returned by IMUEventReaderCreate.
+typedef struct IMUEventReader * IMUEventReaderRef;
 
-/// Stops streaming and releases the client. Safe to call multiple times.
-void IMUEventStopStreaming(void);
+/// Creates a new reader and starts streaming. Returns NULL on failure.
+/// On success, callback fires for every accelerometer event on the main queue
+/// until IMUEventReaderDestroy is called.
+IMUEventReaderRef _Nullable IMUEventReaderCreate(IMUSampleCallback _Nonnull cb,
+                                                 void * _Nullable context);
+
+/// Stops streaming and releases the reader. Safe to call with NULL.
+void IMUEventReaderDestroy(IMUEventReaderRef _Nullable reader);
 
 #ifdef __cplusplus
 }
