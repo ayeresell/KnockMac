@@ -14,6 +14,8 @@
 #ifndef IMUEventReader_h
 #define IMUEventReader_h
 
+#import <Foundation/NSObjCRuntime.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
