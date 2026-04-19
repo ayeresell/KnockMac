@@ -34,9 +34,9 @@ final class AccelerometerReader {
     private(set) var isAvailable = false
 
     // MARK: Private
-    // Retained reference passed into the C callback to guarantee self outlives it.
+
+    nonisolated(unsafe) private var reader: IMUEventReaderRef?
     nonisolated(unsafe) private var retainedSelf: Unmanaged<AccelerometerReader>?
-    private var started = false
 
     // MARK: Lifecycle
 
@@ -45,16 +45,14 @@ final class AccelerometerReader {
     }
 
     deinit {
-        IMUEventStopStreaming()
+        if let reader { IMUEventReaderDestroy(reader) }
         retainedSelf?.release()
-        retainedSelf = nil
     }
 
     // MARK: Control
 
     /// Re-establishes streaming. Used after onboarding's calibration reader
-    /// finishes — both readers can coexist on Event System path, but rebind
-    /// preserves the old API contract from the IOHIDDevice-era reader.
+    /// finishes — preserves the API contract from the IOHIDDevice-era reader.
     func rebind() {
         stop()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
@@ -63,23 +61,23 @@ final class AccelerometerReader {
     }
 
     func stop() {
-        guard started else { return }
-        IMUEventStopStreaming()
+        guard let r = reader else { return }
+        IMUEventReaderDestroy(r)
+        reader = nil
         retainedSelf?.release()
         retainedSelf = nil
-        started = false
         isAvailable = false
     }
 
     // MARK: Setup
 
     private func start() {
-        guard !started else { return }
+        guard reader == nil else { return }
 
         let retained = Unmanaged.passRetained(self)
         retainedSelf = retained
 
-        let result = IMUEventStartStreaming({ x, y, z, ctx in
+        reader = IMUEventReaderCreate({ x, y, z, ctx in
             guard let ctx else { return }
             // Callback fires on the main dispatch queue (set in IMUEventReader.m).
             // Safe to assume MainActor isolation.
@@ -89,14 +87,12 @@ final class AccelerometerReader {
             }
         }, retained.toOpaque())
 
-        if result == 0 {
-            started = true
-            print("[Accel] IMU Event System streaming started (private API)")
+        if reader != nil {
+            print("[Accel] IMU streaming started (Event System path)")
         } else {
-            // Failure — release the retained self since the callback will never fire.
             retained.release()
             retainedSelf = nil
-            print("[Accel] IMUEventStartStreaming failed with code \(result)")
+            print("[Accel] IMUEventReaderCreate failed — IMU service not found or kick rejected")
         }
     }
 
