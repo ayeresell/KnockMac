@@ -18,9 +18,11 @@
 extern "C" {
 #endif
 
+NS_ASSUME_NONNULL_BEGIN
+
 /// Called for every accelerometer sample. x/y/z are in units of g.
 /// Always invoked on the main dispatch queue.
-typedef void (*IMUSampleCallback)(double x, double y, double z, void *context);
+typedef void (*IMUSampleCallback)(double x, double y, double z, void * _Nullable context);
 
 /// Opaque handle returned by IMUEventReaderCreate.
 typedef struct IMUEventReader * IMUEventReaderRef;
@@ -28,11 +30,13 @@ typedef struct IMUEventReader * IMUEventReaderRef;
 /// Creates a new reader and starts streaming. Returns NULL on failure.
 /// On success, callback fires for every accelerometer event on the main queue
 /// until IMUEventReaderDestroy is called.
-IMUEventReaderRef _Nullable IMUEventReaderCreate(IMUSampleCallback _Nonnull cb,
+IMUEventReaderRef _Nullable IMUEventReaderCreate(IMUSampleCallback cb,
                                                  void * _Nullable context);
 
 /// Stops streaming and releases the reader. Safe to call with NULL.
 void IMUEventReaderDestroy(IMUEventReaderRef _Nullable reader);
+
+NS_ASSUME_NONNULL_END
 
 #ifdef __cplusplus
 }
