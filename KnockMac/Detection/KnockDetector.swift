@@ -19,6 +19,7 @@ final class KnockDetector {
     private var lastDoubleTriggerTime: TimeInterval = 0
     private var unfreezeAfter: TimeInterval = 0
     private var lastStatusLog: TimeInterval = 0
+    private var lastNearMissLog: TimeInterval = 0
     private var gateSuppressCount: Int = 0
 
     init() {
