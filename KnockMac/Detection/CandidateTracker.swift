@@ -5,6 +5,13 @@ final class CandidateTracker {
         let samples: [AccelSample]
         let peakIndex: Int
         let baseline: Double
+        // Parabolic-interpolated peak deviation. The IMU samples at ~140 Hz so
+        // the true peak almost never lands exactly on a sample — fitting a
+        // parabola to (peak-1, peak, peak+1) recovers the between-sample peak
+        // and dramatically reduces apparent peak variance for repeated knocks
+        // of the same strength. Falls back to the raw sample value for end-of-
+        // window peaks or non-concave triplets.
+        let refinedPeakDeviation: Double
     }
 
     var onImpulse: ((ImpulseWindow) -> Void)?
