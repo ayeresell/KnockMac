@@ -79,4 +79,35 @@ final class ShapeAnalyzerTests: XCTestCase {
             XCTFail("Expected reject (weak Z dominance)")
         }
     }
+
+    func testRejectsByYOffAtCalibratedThreshold() {
+        let T: Double = 0.009
+        // Synthesized window: canonical Z knock shape (quiet pre, sharp attack,
+        // clean decay). Peak Y is displaced by T - 0.005 = 0.004 from the
+        // pre-buffer mean (~0), producing yOff = 0.004 which crosses the
+        // reject line (yOff < T = 0.009).
+        var samples: [AccelSample] = []
+        for _ in 0..<5 { samples.append(AccelSample(x: 0, y: 0, z: 1.0)) }
+        samples.append(AccelSample(x: 0, y: 0, z: 1.03))
+        samples.append(AccelSample(x: 0, y: 0, z: 1.09))
+        samples.append(AccelSample(x: 0, y: T - 0.005, z: 1.12))   // peak
+        samples.append(AccelSample(x: 0, y: 0, z: 1.05))
+        samples.append(AccelSample(x: 0, y: 0, z: 1.02))
+        samples.append(AccelSample(x: 0, y: 0, z: 1.005))
+        let peakIndex = 7
+        let w = CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: 1.0)
+
+        let a = ShapeAnalyzer(
+            maxAttackSamples: 20,
+            minDecaySamples: 2,
+            decayFraction: 0.5,
+            minZDominance: 0.0,
+            maxPreQuietDeviation: 0.020,
+            minPeakDeviation: 0.060,
+            minYOff: T
+        )
+        if case .accept = a.classify(w) {
+            XCTFail("Expected reject (location_yoff)")
+        }
+    }
 }
