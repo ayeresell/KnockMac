@@ -39,17 +39,19 @@ final class KnockDetector {
             decayFraction: 0.5,
             minZDominance: 0.0,
             maxPreQuietDeviation: 0.020,
-            minPeakDeviation: 0.060,
-            // minSignedDy left at -.infinity: on the Event System path all
-            // knocks produce positive sdy, so the old directional filter is
-            // obsolete. Replaced by the yOff discriminator below.
-            minYOff: 0.009
-            // yOff discriminator: reject impulses from the lower half of the
-            // chassis. Calibrated 2026-04-20 on Mac14,15 — see
+            minPeakDeviation: 0.060
+            // minSignedDy and minYOff both left at -.infinity (filter disabled).
+            // 2026-04-20 phase A attempt to calibrate a yOff threshold on
+            // Mac14,15 Event System IMU stack failed: calibration set (30+30
+            // uniform-effort finger taps) suggested T=0.009 with 100% recall,
+            // but live verification showed distribution shift — live top-chassis
+            // knocks produce yOff down to 0.000 (median +0.007), indistinguishable
+            // from bottom-chassis knocks. Impact localization via shape metrics
+            // is not feasible on this IMU without per-device runtime calibration
+            // (phase B). Infra left in place: [Shape.diag] prints all 6 metrics,
+            // ShapeAnalyzer accepts minSignedDy/minYOff params. See
             // docs/superpowers/specs/2026-04-20-trackpad-tap-discriminator-design.md
-            // and docs/superpowers/logs/calib_analysis.md (local).
-            // Phase A: fixed threshold for this device. Phase B (separate
-            // spec) will add per-device onboarding calibration.
+            // and docs/superpowers/logs/verification_run_1.txt (local) for data.
         )
         // maxAttackRatio relaxed: on the Event System path, findImpulseStart
         // is unstable (noisier pre-buffer) so attackSamples swings 2 ↔ 11
