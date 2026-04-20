@@ -44,7 +44,7 @@ final class KnockDetector {
         self.matcher = DoubleKnockMatcher(minGap: 0.15, maxGap: 0.5, maxAmpRatio: 4.0, maxAttackRatio: 10.0)
 
         wire()
-        print("[Detector] v2 initialized — k=5.0 absFloor=0.030 attack≤20 minPeak=0.065g zDom=disabled ampRatio≤4.0 attackRatio≤10.0 gap=[0.15,0.5]s gate=0.5s")
+        print("[Detector] v2 initialized — k=5.0 absFloor=0.030 attack≤20 minPeak=0.065g zDom=disabled ampRatio≤4.0 attackRatio≤10.0 gap=[0.15,0.5]s gate=0.5s cooldown=0.15s")
     }
 
     private func wire() {
