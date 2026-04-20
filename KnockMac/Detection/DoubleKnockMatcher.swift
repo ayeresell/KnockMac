@@ -48,7 +48,10 @@ final class DoubleKnockMatcher {
                 return
             }
             if !shapeSimilar(prev, event) {
-                print("[Matcher] shape mismatch ampRatio=\(String(format: "%.2f", ampRatio)) (max=\(maxAmpRatio)) — stored as new first")
+                let aA = max(1, prev.attackSamples)
+                let bA = max(1, event.attackSamples)
+                let attackRatio = Double(max(aA, bA)) / Double(min(aA, bA))
+                print("[Matcher] shape mismatch ampRatio=\(String(format: "%.2f", ampRatio))/max=\(maxAmpRatio) attackRatio=\(String(format: "%.2f", attackRatio))/max=\(maxAttackRatio) (attacks=\(prev.attackSamples)→\(event.attackSamples)) — stored as new first")
                 lastEvent = event
                 return
             }
