@@ -54,10 +54,12 @@ final class DoubleKnockMatcher {
             }
             print("[Matcher] ✓ pair accepted gap=\(String(format: "%.3f", gap))s ampRatio=\(String(format: "%.2f", ampRatio))")
             onDouble?(gap, event.peak)
-            // Reset after a successful pair so a continuous tap stream doesn't
-            // chain knock2→knock3 into a second double. Pairs are strictly
-            // 1+2, 3+4, 5+6 — humans naturally pause between intentional
-            // double-knock gestures.
+            // Non-overlapping pairing (1+2, 3+4, ...). Sliding was tried and
+            // rejected: with a steady tap rhythm, sliding produces overlapping
+            // pairs spaced exactly one knock-interval apart, and the detector
+            // cooldown ends up suppressing every second fire. Resetting here
+            // means the next knock starts a fresh pair, and the next double
+            // fires two knocks later (well past cooldown).
             lastEvent = nil
             return
         }
