@@ -20,7 +20,7 @@ final class KnockDetector {
     var cooldown: TimeInterval = 0.15
 
     // Three tunables — only these matter.
-    private var absoluteFloor: Double = 0.060   // g; never fires below this
+    private var absoluteFloor: Double = 0.040   // g; never fires below this
     private let k: Double = 6.0                 // MAD multiplier
     private let refractory: TimeInterval = 0.08 // per-impulse lockout
     private let minGap: TimeInterval = 0.08
