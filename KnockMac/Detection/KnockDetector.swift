@@ -26,7 +26,10 @@ final class KnockDetector {
     private let minGap: TimeInterval = 0.08
     private let maxGap: TimeInterval = 0.9
 
-    private let gate = InputActivityGate(suppressionWindow: 0.5)
+    // suppressionWindow lowered from 0.5 to 0.15 — at 0.5s, any keyboard/mouse
+    // event blocked half a second of samples, which silently swallowed entire
+    // physical knocks when the user was testing with Xcode/Console focused.
+    private let gate = InputActivityGate(suppressionWindow: 0.15)
 
     // 200-sample ring of magnitudes. Median + MAD recomputed each sample.
     // 200 × ~10ms = 2s of context — long enough to be stable, short enough to
