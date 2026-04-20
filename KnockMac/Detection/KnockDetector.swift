@@ -143,8 +143,14 @@ final class KnockDetector {
     func setCalibrationMode(threshold: Double) {}
 
     private func findImpulseStart(_ w: CandidateTracker.ImpulseWindow) -> Int {
+        // 0.020g matches ShapeAnalyzer.maxPreQuietDeviation. The previous
+        // 0.010g threshold was too sensitive to between-knock chassis
+        // resonance (0.026–0.038g per the near-miss log) and counted that
+        // residual ringing as part of the new impulse — inflating attack
+        // and causing the matcher to reject otherwise-valid pairs as
+        // "shape mismatch".
         for (i, s) in w.samples.enumerated() {
-            if abs(s.magnitude - w.baseline) > 0.010 {
+            if abs(s.magnitude - w.baseline) > 0.020 {
                 return i
             }
         }
