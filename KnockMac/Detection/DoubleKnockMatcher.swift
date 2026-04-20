@@ -54,7 +54,11 @@ final class DoubleKnockMatcher {
             }
             print("[Matcher] ✓ pair accepted gap=\(String(format: "%.3f", gap))s ampRatio=\(String(format: "%.2f", ampRatio))")
             onDouble?(gap, event.peak)
-            lastEvent = nil
+            // Sliding pairing: keep the just-accepted 2nd knock as the next
+            // candidate 1st. Lets a 3-knock burst chain into a second pair
+            // (knock1+knock2 fires, then knock2+knock3 attempts to fire — the
+            // detector cooldown decides whether that retrigger is allowed).
+            lastEvent = event
             return
         }
         print("[Matcher] 1st knock stored peak=\(String(format: "%.3f", event.peak))g attack=\(event.attackSamples) — waiting for 2nd")
