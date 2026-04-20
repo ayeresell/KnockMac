@@ -56,7 +56,11 @@ static int kickIMUService(IOHIDEventSystemClientRef client) {
     CFArrayRef services = IOHIDEventSystemClientCopyServices(client);
     if (!services) return 0;
 
-    int32_t intervalUs = 8000; // 125 Hz native rate
+    // 10000us = 100 Hz. Matches the rate the old IOHIDDevice path delivered
+    // (Apr 17 / cfa776b). The detector's attack-ratio tolerance was tuned for
+    // that rate; running at 8000us (125 Hz) made attack measurements jittery
+    // enough to fail the matcher's shape-similarity check.
+    int32_t intervalUs = 10000;
     CFNumberRef nv = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &intervalUs);
 
     int kicked = 0;
