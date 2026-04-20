@@ -8,7 +8,7 @@ final class KnockDetector {
     var singleKnockOnly: Bool = false {
         didSet { matcher.singleKnockOnly = singleKnockOnly }
     }
-    var cooldown: TimeInterval = 1.0
+    var cooldown: TimeInterval = 0.65
 
     private let gate: InputActivityGate
     private let baseline: AdaptiveBaseline
@@ -24,13 +24,13 @@ final class KnockDetector {
     init() {
         // Lowered k and absoluteFloor from defaults so lighter knocks register.
         // Relaxed attack window and Z-dominance so real-world impulses pass.
-        self.gate = InputActivityGate(suppressionWindow: 0.5)
+        self.gate = InputActivityGate(suppressionWindow: 0.2)
         self.baseline = AdaptiveBaseline(
             windowSize: 200,
             k: 5.0,
             sigmaFloor: 0.003,
             sigmaCeiling: 0.03,
-            absoluteFloor: 0.030
+            absoluteFloor: 0.038
         )
         self.tracker = CandidateTracker()
         self.shape = ShapeAnalyzer(
@@ -39,12 +39,19 @@ final class KnockDetector {
             decayFraction: 0.5,
             minZDominance: 0.0,
             maxPreQuietDeviation: 0.020,
-            minPeakDeviation: 0.065
+            minPeakDeviation: 0.060
+            // minSignedDy disabled: calibration was done against the old
+            // IOHIDDevice axis frame; on the Event System path real knocks
+            // produce sdy ≈ -0.014, which was tripping the trackpad filter.
+            // Recalibrate with fresh data if trackpad taps start triggering.
         )
-        self.matcher = DoubleKnockMatcher(minGap: 0.15, maxGap: 0.5, maxAmpRatio: 4.0)
+        // maxAttackRatio relaxed: on the Event System path, findImpulseStart
+        // is unstable (noisier pre-buffer) so attackSamples swings 2 ↔ 11
+        // for identical physical knocks. ampRatio + gap are enough to match.
+        self.matcher = DoubleKnockMatcher(minGap: 0.15, maxGap: 0.5, maxAmpRatio: 4.0, maxAttackRatio: 20.0)
 
         wire()
-        print("[Detector] v2 initialized — k=5.0 absFloor=0.030 attack≤20 minPeak=0.065g zDom=disabled ampRatio≤4.0 gap=[0.15,0.5]s gate=0.5s")
+        print("[Detector] v2 initialized — k=5.0 absFloor=0.038 attack≤20 minPeak=0.060g zDom=disabled sdy≥-0.002 ampRatio≤4.0 gap=[0.15,0.5]s gate=0.5s")
     }
 
     private func wire() {
@@ -62,6 +69,7 @@ final class KnockDetector {
                 self.matcher.submit(KnockEvent(time: now, peak: peak, attackSamples: attack))
             case .reject(let reason):
                 print("[Shape] ❌ reject: \(reason)")
+                self.matcher.submitRejected(time: now, reason: reason)
             }
             self.unfreezeAfter = now + 0.5
         }
@@ -91,13 +99,16 @@ final class KnockDetector {
             unfreezeAfter = 0
         }
 
+        // While the user is typing / clicking, skip the sample entirely — do
+        // NOT feed it into baseline. Previously we fed, which let typing
+        // vibration inflate σ and raise the threshold out of reach for knocks.
         if gate.shouldSuppress() {
-            baseline.feed(sample.magnitude)
             gateSuppressCount += 1
             return
         }
 
-        baseline.feed(sample.magnitude)
+        // Decide threshold from the baseline BEFORE this sample is added, so an
+        // incoming peak cannot inflate σ of the window it's being compared against.
         let dev = abs(sample.magnitude - baseline.baseline)
         let threshold = baseline.thresholdDeviation
 
@@ -109,8 +120,14 @@ final class KnockDetector {
             gateSuppressCount = 0
         }
 
-        if dev > threshold {
+        // Freeze baseline whenever the sample clearly isn't "quiet" — use the
+        // fixed absoluteFloor, NOT the (possibly runaway) dynamic threshold.
+        // This prevents a feedback loop where a rising threshold lets peaks
+        // through into baseline, which raises σ, which raises threshold further.
+        if baseline.isWarmedUp && dev > baseline.absoluteFloor {
             baseline.freeze()
+        } else {
+            baseline.feed(sample.magnitude)
         }
         tracker.feed(sample, deviation: dev, threshold: threshold, baseline: baseline.baseline)
     }

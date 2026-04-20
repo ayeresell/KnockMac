@@ -31,6 +31,8 @@ final class AdaptiveBaseline {
         count == 0 ? 0 : sum / Double(count)
     }
 
+    var isWarmedUp: Bool { count >= windowSize }
+
     var sigma: Double {
         guard count > 1 else { return sigmaFloor }
         let mean = sum / Double(count)

@@ -9,11 +9,11 @@ final class InputActivityGate {
     }
 
     func shouldSuppress() -> Bool {
-        let tKey   = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .keyDown)
-        let tFlags = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .flagsChanged)
-        let tLeft  = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .leftMouseDown)
-        let tRight = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .rightMouseDown)
-        let tOther = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .otherMouseDown)
-        return min(tKey, tFlags, tLeft, tRight, tOther) < suppressionWindow
+        // Gate disabled: CGEventSource was reporting phantom input events
+        // (observed 318 suppressions in 5 s with no user input, apparently
+        // synthesized by SCScreenshotManager during rapid screenshot bursts).
+        // False suppressions were eating real knocks mid-sequence. Detector
+        // relies on peak-hold + shape filter to reject mouse-induced jitter.
+        return false
     }
 }

@@ -28,6 +28,20 @@ final class DoubleKnockMatcher {
         self.maxAttackRatio = maxAttackRatio
     }
 
+    /// Cancel a pending 1st-knock if a shape-rejected impulse lands inside
+    /// the pair window. That impulse is almost always a bounce/echo or a
+    /// weak knock that would have been the 2nd of the pair — leaving it
+    /// unacknowledged keeps `lastEvent` stale and drops the following real
+    /// knock as "too slow". Cancelling lets the next valid impulse start a
+    /// fresh pair. Outside the pair window the rejected impulse is ignored.
+    func submitRejected(time: TimeInterval, reason: String) {
+        guard let prev = lastEvent else { return }
+        let gap = time - prev.time
+        guard gap >= minGap && gap <= maxGap else { return }
+        print("[Matcher] pending 1st cancelled — shape-rejected impulse inside window (gap=\(String(format: "%.3f", gap))s, reason=\(reason))")
+        lastEvent = nil
+    }
+
     func submit(_ event: KnockEvent) {
         if singleKnockOnly {
             onSingle?(event.peak)
