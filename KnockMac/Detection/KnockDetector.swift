@@ -53,7 +53,7 @@ final class KnockDetector {
         tracker.onImpulse = { [weak self] window in
             guard let self else { return }
             let now = ProcessInfo.processInfo.systemUptime
-            let peakDev = abs(window.samples[window.peakIndex].magnitude - window.baseline)
+            let peakDev = window.refinedPeakDeviation
             let impulseStart = self.findImpulseStart(window)
             let attack = max(0, window.peakIndex - impulseStart)
             print("[Tracker] impulse emitted: peak=\(String(format: "%.3f", peakDev))g attack=\(attack) samples=\(window.samples.count) baseline=\(String(format: "%.3f", window.baseline))g")
