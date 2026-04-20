@@ -74,7 +74,8 @@ final class ShapeAnalyzerTests: XCTestCase {
         samples.append(AccelSample(x: 0.01, y: 0, z: 1.001))
         samples.append(AccelSample(x: 0.005, y: 0, z: 1.001))
         let peakIndex = 6
-        let w = CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: 1.0)
+        let refined = CandidateTracker.parabolicPeak(samples: samples, peakIndex: peakIndex, baseline: 1.0)
+        let w = CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: 1.0, refinedPeakDeviation: refined)
 
         if case .accept = a.classify(w) {
             XCTFail("Expected reject (weak Z dominance)")
