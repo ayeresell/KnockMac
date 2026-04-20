@@ -55,10 +55,14 @@ final class CandidateTracker {
                 appendPreBuffer(sample)
             }
         case .draining:
-            // Wait for signal to drop below threshold before accepting a new candidate.
-            if deviation <= threshold {
+            // Wait for signal to drop below threshold before accepting a new
+            // candidate, but cap the wait so a sustained tap stream cannot
+            // keep us pinned here indefinitely.
+            drainingSamples += 1
+            if deviation <= threshold || drainingSamples >= maxDrainingSamples {
                 appendPreBuffer(sample)
                 state = .idle
+                drainingSamples = 0
             }
         case .collecting:
             appendCollected(sample, deviation: deviation)
