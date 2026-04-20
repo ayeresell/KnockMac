@@ -148,6 +148,13 @@ final class ShapeAnalyzer {
             return .reject(reason: "trackpad_dir sdy=\(String(format: "%+.3f", sdy))")
         }
 
+        // 7. Location discriminator — yOff at peak separates upper vs lower
+        // chassis impacts on the Event System IMU axis frame (Mac14,15).
+        // yOff was computed earlier for the diagnostic print — reuse it.
+        if yOff < minYOff {
+            return .reject(reason: "location_yoff yOff=\(String(format: "%+.3f", yOff))")
+        }
+
         return .accept(peak: peakDeviation)
     }
 }
