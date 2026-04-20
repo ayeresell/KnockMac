@@ -1269,13 +1269,6 @@ class OnboardingWindowManager {
             window?.title = title
         }
 
-        // Pre-size the window to the exact content size we expect. Relying on
-        // `window.frame` before the hosting controller has laid out can return
-        // the initial contentRect-derived frame which mis-centres the window.
-        if let window {
-            window.setContentSize(NSSize(width: 460, height: 480))
-        }
-
         // LSUIElement apps relaunched after a TCC "Quit & Reopen" come up as
         // a background accessory with no Dock tile — NSApp.activate then does
         // nothing and the onboarding window stays hidden. Temporarily promote
@@ -1285,21 +1278,29 @@ class OnboardingWindowManager {
         window?.makeKeyAndOrderFront(nil)
         window?.orderFrontRegardless()
 
-        // Center *after* orderFront so `window.frame` reflects the final size
-        // after hosting-controller layout. Use `visibleFrame` so the window
-        // sits in the usable area (above the dock, below the menu bar).
-        if let window {
-            let screen = window.screen
-                ?? NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) })
-                ?? NSScreen.main
-            if let screen {
-                let sf = screen.visibleFrame
-                let wf = window.frame
-                let origin = NSPoint(
-                    x: sf.origin.x + (sf.width  - wf.width)  / 2,
-                    y: sf.origin.y + (sf.height - wf.height) / 2
-                )
-                window.setFrameOrigin(origin)
+        // Defer sizing + centering to the next runloop tick. Calling
+        // setContentSize synchronously here (while NSHostingController is
+        // mid first-layout after contentViewController assignment) re-enters
+        // layoutSubtreeIfNeeded and AppKit logs a recursion warning. By the
+        // next tick the hosting controller has settled and window.frame
+        // reflects the final size — so centering also becomes accurate.
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                guard let window = self.window else { return }
+                window.setContentSize(NSSize(width: 460, height: 480))
+
+                let screen = window.screen
+                    ?? NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) })
+                    ?? NSScreen.main
+                if let screen {
+                    let sf = screen.visibleFrame
+                    let wf = window.frame
+                    let origin = NSPoint(
+                        x: sf.origin.x + (sf.width  - wf.width)  / 2,
+                        y: sf.origin.y + (sf.height - wf.height) / 2
+                    )
+                    window.setFrameOrigin(origin)
+                }
             }
         }
     }
