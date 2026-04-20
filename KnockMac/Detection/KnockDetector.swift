@@ -111,9 +111,28 @@ final class KnockDetector {
             gateSuppressCount = 0
         }
 
-        if dev > threshold {
+        // Early baseline freeze. Without this, the rising edge of every knock
+        // (which crosses ~0.3×threshold before reaching threshold) leaks into
+        // the rolling-mean σ. Five rapid knocks were enough to nearly double
+        // σ in field testing — threshold then climbed past 0.07g and weaker
+        // knocks were silently dropped before tracker.feed.
+        // Each leading-edge sample also bumps unfreezeAfter so the freeze
+        // outlives the impulse and prevents follow-up samples from contaminating.
+        let edgeBand = 0.3 * threshold
+        if dev > edgeBand {
             baseline.freeze()
+            unfreezeAfter = max(unfreezeAfter, now + 0.3)
         }
+
+        // Visibility for near-miss samples: the tracker silently ignores any
+        // sample with dev ≤ threshold, so a weak knock looks identical to no
+        // knock in the log. Surface anything in the [0.6, 1.0] × threshold band
+        // (rate-limited) so missed knocks become diagnosable.
+        if dev > 0.6 * threshold && dev <= threshold && now - lastNearMissLog > 0.1 {
+            lastNearMissLog = now
+            print("[Detector] near-miss dev=\(String(format: "%.3f", dev))g threshold=\(String(format: "%.3f", threshold))g — sample below threshold, not tracked")
+        }
+
         tracker.feed(sample, deviation: dev, threshold: threshold, baseline: baseline.baseline)
     }
 
