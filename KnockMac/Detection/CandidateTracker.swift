@@ -23,6 +23,13 @@ final class CandidateTracker {
     private var peakDeviation: Double = 0
     private var baselineAtStart: Double = 0
     private var quietRun: Int = 0
+    private var drainingSamples: Int = 0
+
+    // Hard cap on how long we wait for the post-impulse signal to fall below
+    // threshold before forcing a return to .idle. ~140 Hz × 15 ≈ 100 ms.
+    // Without this, a continuous tap stream keeps the tracker stuck in
+    // .draining and silently swallows every knock until the signal calms.
+    private let maxDrainingSamples: Int = 15
 
     func reset() {
         state = .idle
@@ -30,6 +37,7 @@ final class CandidateTracker {
         peakIndex = 0
         peakDeviation = 0
         quietRun = 0
+        drainingSamples = 0
     }
 
     func feed(_ sample: AccelSample, deviation: Double, threshold: Double, baseline: Double) {
