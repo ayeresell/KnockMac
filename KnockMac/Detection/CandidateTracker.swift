@@ -102,9 +102,24 @@ final class CandidateTracker {
 
     private func emit(clearPreBuffer: Bool = false) {
         let all = preBuffer + collected
-        let window = ImpulseWindow(samples: all, peakIndex: peakIndex, baseline: baselineAtStart)
+        let refined = Self.parabolicPeak(samples: all, peakIndex: peakIndex, baseline: baselineAtStart)
+        let window = ImpulseWindow(samples: all, peakIndex: peakIndex, baseline: baselineAtStart, refinedPeakDeviation: refined)
         onImpulse?(window)
         preBuffer = clearPreBuffer ? [] : Array(all.suffix(preBufferSize))
         collected = []
+    }
+
+    static func parabolicPeak(samples: [AccelSample], peakIndex: Int, baseline: Double) -> Double {
+        let center = abs(samples[peakIndex].magnitude - baseline)
+        guard peakIndex > 0, peakIndex < samples.count - 1 else { return center }
+        let left  = abs(samples[peakIndex - 1].magnitude - baseline)
+        let right = abs(samples[peakIndex + 1].magnitude - baseline)
+        // Parabola y = px²+qx+r through (-1,left)(0,center)(1,right):
+        //   2p = left + right - 2*center      (denom; negative for a true peak)
+        //   vertex_y = center - (right-left)² / (8 * (left+right-2*center)/2)
+        let denom = left + right - 2 * center
+        guard denom < 0 else { return center }
+        let dy = right - left
+        return center - (dy * dy) / (4 * denom)
     }
 }
