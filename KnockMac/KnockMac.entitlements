@@ -8,8 +8,5 @@
     <!-- Sandboxing off — needed for IOKit HID + screencapture -->
     <key>com.apple.security.app-sandbox</key>
     <false/>
-    <!-- Allow ad-hoc signed debug dylibs under hardened runtime (Xcode ⌘R) -->
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
 </dict>
 </plist>

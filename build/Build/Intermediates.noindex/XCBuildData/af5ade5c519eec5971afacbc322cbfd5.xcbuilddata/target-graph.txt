@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'KnockMac' in project 'KnockMac' (no dependencies)
