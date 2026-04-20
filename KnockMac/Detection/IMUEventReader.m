@@ -32,21 +32,22 @@ struct IMUEventReader {
     void                      *context;
 };
 
+// kIOHIDEventTypeAccelerometer = 13 on macOS 26.x. Reading the type from the
+// event itself keeps us resilient if Apple renumbers the enum in a future release.
 static void hidEventCallback(void *target, void *refcon,
                              IOHIDServiceClientRef sender, IOHIDEventRef event) {
     if (!refcon || !event) return;
     IMUEventReaderRef reader = (IMUEventReaderRef)refcon;
-    if (!reader->callback) return;
+    IMUSampleCallback cb = reader->callback;
+    if (!cb) return;
 
-    // Field encoding: (eventType << 16) | axisIndex
-    // For Accelerometer events on macOS 26 the type id is 13.
-    // Reading by the actual reported type makes us resilient to numbering changes.
+    // Field encoding: (eventType << 16) | axisIndex.
     uint32_t type = IOHIDEventGetType(event);
     double x = IOHIDEventGetFloatValue(event, (type << 16) | 0);
     double y = IOHIDEventGetFloatValue(event, (type << 16) | 1);
     double z = IOHIDEventGetFloatValue(event, (type << 16) | 2);
 
-    reader->callback(x, y, z, reader->context);
+    cb(x, y, z, reader->context);
 }
 
 // Walk the service list, find page=0xff00 usage=3, and write properties
