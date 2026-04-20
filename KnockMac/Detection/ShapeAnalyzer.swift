@@ -50,7 +50,26 @@ final class ShapeAnalyzer {
         let xOff = peakSample.x - refX
         let yOff = peakSample.y - refY
         let zOff = peakSample.z - refZ
-        print("[Shape.diag] peak=\(String(format: "%.3f", peakDeviation))g xOff=\(String(format: "%+.3f", xOff)) yOff=\(String(format: "%+.3f", yOff)) zOff=\(String(format: "%+.3f", zOff))")
+
+        // Signed sample-to-sample deltas at the peak. Logged here so every
+        // classified impulse has all six candidate discriminator metrics in
+        // the trace (integral offsets + sample-to-sample deltas). The later
+        // step-5 guard at line ~107 rejects peakIndex == 0 cases — we emit
+        // zeros here in that edge to keep the print format uniform.
+        let sdx: Double
+        let sdy: Double
+        let sdz: Double
+        if w.peakIndex > 0 {
+            let prev = samples[w.peakIndex - 1]
+            sdx = peakSample.x - prev.x
+            sdy = peakSample.y - prev.y
+            sdz = peakSample.z - prev.z
+        } else {
+            sdx = 0
+            sdy = 0
+            sdz = 0
+        }
+        print("[Shape.diag] peak=\(String(format: "%.3f", peakDeviation))g xOff=\(String(format: "%+.3f", xOff)) yOff=\(String(format: "%+.3f", yOff)) zOff=\(String(format: "%+.3f", zOff)) sdx=\(String(format: "%+.4f", sdx)) sdy=\(String(format: "%+.4f", sdy)) sdz=\(String(format: "%+.4f", sdz))")
 
         // 0. Minimum peak check — filters out chassis echoes from earlier impacts.
         if peakDeviation < minPeakDeviation {
