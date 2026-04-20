@@ -937,6 +937,7 @@ struct OnboardingView: View {
             promptTyped += 1
         }
         if allFullyTyped
+            && promptTyped >= promptMessage.count
             && !screenModalFired
             && !hasScreenCapture
             && !needsCaptureRestart
