@@ -115,11 +115,12 @@ final class CandidateTracker {
         let left  = abs(samples[peakIndex - 1].magnitude - baseline)
         let right = abs(samples[peakIndex + 1].magnitude - baseline)
         // Parabola y = px²+qx+r through (-1,left)(0,center)(1,right):
-        //   2p = left + right - 2*center      (denom; negative for a true peak)
-        //   vertex_y = center - (right-left)² / (8 * (left+right-2*center)/2)
+        //   p = (left + right - 2*center) / 2     (negative for a true peak)
+        //   q = (right - left) / 2
+        //   vertex_y = center - q²/(4p) = center - (right-left)² / (8*(left+right-2*center))
         let denom = left + right - 2 * center
         guard denom < 0 else { return center }
         let dy = right - left
-        return center - (dy * dy) / (4 * denom)
+        return center - (dy * dy) / (8 * denom)
     }
 }
