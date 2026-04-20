@@ -136,9 +136,9 @@ final class ShapeAnalyzer {
         }
 
         // 6. Directional Y-axis check — trackpad-tap discriminator.
-        let sdyStep6 = peakSample.y - prev.y
-        if sdyStep6 < minSignedDy {
-            return .reject(reason: "trackpad_dir sdy=\(String(format: "%+.3f", sdyStep6))")
+        // sdy is already computed above for the diagnostic print; reuse it.
+        if sdy < minSignedDy {
+            return .reject(reason: "trackpad_dir sdy=\(String(format: "%+.3f", sdy))")
         }
 
         return .accept(peak: peakDeviation)
