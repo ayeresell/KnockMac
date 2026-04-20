@@ -114,11 +114,20 @@ IMUEventReaderRef IMUEventReaderCreate(IMUSampleCallback cb, void *context) {
 
 void IMUEventReaderDestroy(IMUEventReaderRef reader) {
     if (!reader) return;
+    // Enforce same-queue destroy. If this ever trips, we'd be racing the
+    // callback dispatched on main and the destroy running elsewhere.
+    dispatch_assert_queue(dispatch_get_main_queue());
+
+    // Null the callback first so any event already queued on main (but not yet
+    // executed) sees cb == NULL when it runs and bails out before deref'ing
+    // the about-to-be-freed reader.
+    reader->callback = NULL;
+    reader->context  = NULL;
+
     if (reader->client) {
         IOHIDEventSystemClientUnscheduleFromDispatchQueue(reader->client, dispatch_get_main_queue());
         CFRelease(reader->client);
+        reader->client = NULL;
     }
-    reader->callback = NULL;
-    reader->context  = NULL;
     free(reader);
 }
