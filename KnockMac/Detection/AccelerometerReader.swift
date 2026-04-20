@@ -85,10 +85,6 @@ final class AccelerometerReader {
         let retained = Unmanaged.passRetained(self)
         retainedSelf = retained
 
-        reader = IMUEventReaderCreate({ _, _, _, ctx in }, retained.toOpaque())
-        // Re-assign with the real callback. (Split out for clarity — the
-        // closure captures no state, so moving it above doesn't change
-        // behavior, but makes the retained.toOpaque() line read cleanly.)
         reader = IMUEventReaderCreate({ x, y, z, ctx in
             guard let ctx else { return }
             // Callback fires on the main dispatch queue (set in IMUEventReader.m).
