@@ -4,12 +4,16 @@ import Foundation
 // path (private API, exposed through IMUEventReader.m bridge).
 //
 // On macOS 26.4+ the public IOHIDDevice + InputReportCallback path no longer
-// receives input reports for the SPU IMU even after IOHIDDeviceOpen succeeds.
-// The IOHIDEventSystemClient path is the only one that delivers events, and
-// requires a "kick" via SetProperty on the IOHIDServiceClient to wake the
-// SPU streaming pipeline. See IMUEventReader.m for the bridge.
+// receives input reports for the SPU IMU. The Event System path is the only
+// one that delivers events, and requires a "kick" via SetProperty on the
+// IOHIDServiceClient to wake the SPU streaming pipeline. See IMUEventReader.m.
 //
 // Events arrive at ~140 Hz with x/y/z already in units of g.
+//
+// LIFETIME: `start()` retains self (Unmanaged.passRetained) so the C callback
+// can safely dereference the opaque context. `stop()` balances the release.
+// Callers MUST call `stop()` before the last strong reference is dropped —
+// otherwise deinit never fires.
 
 struct AccelSample {
     let x: Double
@@ -35,8 +39,12 @@ final class AccelerometerReader {
 
     // MARK: Private
 
-    nonisolated(unsafe) private var reader: IMUEventReaderRef?
-    nonisolated(unsafe) private var retainedSelf: Unmanaged<AccelerometerReader>?
+    private var reader: IMUEventReaderRef?
+    private var retainedSelf: Unmanaged<AccelerometerReader>?
+    // Invalidates pending rebind() closures so a mid-flight stop() can cancel
+    // an impending restart (otherwise dispatch_after would resurrect the reader
+    // after the caller asked us to stop).
+    private var rebindGeneration: UInt64 = 0
 
     // MARK: Lifecycle
 
@@ -44,23 +52,23 @@ final class AccelerometerReader {
         start()
     }
 
-    deinit {
-        if let reader { IMUEventReaderDestroy(reader) }
-        retainedSelf?.release()
-    }
-
     // MARK: Control
 
-    /// Re-establishes streaming. Used after onboarding's calibration reader
-    /// finishes — preserves the API contract from the IOHIDDevice-era reader.
+    /// Stop and restart streaming after a brief settling delay. Used by
+    /// KnockController after onboarding's calibration reader exits, so that
+    /// any pipeline state the calibration reader might have perturbed is
+    /// re-established cleanly.
     func rebind() {
         stop()
+        let gen = rebindGeneration
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.start()
+            guard let self, self.rebindGeneration == gen else { return }
+            self.start()
         }
     }
 
     func stop() {
+        rebindGeneration &+= 1
         guard let r = reader else { return }
         IMUEventReaderDestroy(r)
         reader = nil
@@ -77,22 +85,25 @@ final class AccelerometerReader {
         let retained = Unmanaged.passRetained(self)
         retainedSelf = retained
 
+        reader = IMUEventReaderCreate({ _, _, _, ctx in }, retained.toOpaque())
+        // Re-assign with the real callback. (Split out for clarity — the
+        // closure captures no state, so moving it above doesn't change
+        // behavior, but makes the retained.toOpaque() line read cleanly.)
         reader = IMUEventReaderCreate({ x, y, z, ctx in
             guard let ctx else { return }
             // Callback fires on the main dispatch queue (set in IMUEventReader.m).
-            // Safe to assume MainActor isolation.
             let reader = Unmanaged<AccelerometerReader>.fromOpaque(ctx).takeUnretainedValue()
             MainActor.assumeIsolated {
                 reader.handleSample(x: x, y: y, z: z)
             }
         }, retained.toOpaque())
 
-        if reader != nil {
-            print("[Accel] IMU streaming started (Event System path)")
-        } else {
+        if reader == nil {
             retained.release()
             retainedSelf = nil
             print("[Accel] IMUEventReaderCreate failed — IMU service not found or kick rejected")
+        } else {
+            print("[Accel] IMU streaming started (Event System path)")
         }
     }
 
