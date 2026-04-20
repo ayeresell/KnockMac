@@ -14,7 +14,8 @@ final class ShapeAnalyzerTests: XCTestCase {
         let peakIndex = samples.enumerated().max(by: {
             abs($0.element.magnitude - baseline) < abs($1.element.magnitude - baseline)
         })!.offset
-        return CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: baseline)
+        let refined = CandidateTracker.parabolicPeak(samples: samples, peakIndex: peakIndex, baseline: baseline)
+        return CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: baseline, refinedPeakDeviation: refined)
     }
 
     func testAcceptsCanonicalKnock() {
