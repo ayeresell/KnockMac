@@ -39,11 +39,17 @@ final class KnockDetector {
             decayFraction: 0.5,
             minZDominance: 0.0,
             maxPreQuietDeviation: 0.020,
-            minPeakDeviation: 0.060
-            // minSignedDy disabled: calibration was done against the old
-            // IOHIDDevice axis frame; on the Event System path real knocks
-            // produce sdy ≈ -0.014, which was tripping the trackpad filter.
-            // Recalibrate with fresh data if trackpad taps start triggering.
+            minPeakDeviation: 0.060,
+            // minSignedDy left at -.infinity: on the Event System path all
+            // knocks produce positive sdy, so the old directional filter is
+            // obsolete. Replaced by the yOff discriminator below.
+            minYOff: 0.009
+            // yOff discriminator: reject impulses from the lower half of the
+            // chassis. Calibrated 2026-04-20 on Mac14,15 — see
+            // docs/superpowers/specs/2026-04-20-trackpad-tap-discriminator-design.md
+            // and docs/superpowers/logs/calib_analysis.md (local).
+            // Phase A: fixed threshold for this device. Phase B (separate
+            // spec) will add per-device onboarding calibration.
         )
         // maxAttackRatio relaxed: on the Event System path, findImpulseStart
         // is unstable (noisier pre-buffer) so attackSamples swings 2 ↔ 11
