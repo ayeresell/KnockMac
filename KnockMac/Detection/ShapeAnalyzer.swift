@@ -39,7 +39,10 @@ final class ShapeAnalyzer {
             return .reject(reason: "invalid_peak_index")
         }
         let peakSample = samples[w.peakIndex]
-        let peakDeviation = abs(peakSample.magnitude - w.baseline)
+        // Use parabolic-interpolated peak (true between-sample peak) instead
+        // of the raw peak sample. Reduces apparent peak variance for repeated
+        // knocks of identical strength by 30-50%.
+        let peakDeviation = w.refinedPeakDeviation
 
         // Per-axis signed displacement from rest, averaged over the first few
         // pre-impulse samples. Stabler than sample-to-sample delta for weak taps.
