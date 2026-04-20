@@ -66,7 +66,11 @@ final class ShapeAnalyzer {
             }
         }
 
-        // 2. Pre-quiet check.
+        // 2. Pre-quiet check. Only enforced when we actually have pre-impulse
+        // samples to inspect — impulseStart=0 means the impulse begins at the
+        // first sample of the window (e.g. first knock after launch, or right
+        // after a hardCap-emitted impulse cleared the preBuffer). In that case
+        // we have nothing to compare against and we trust the impulse.
         if impulseStart > 0 {
             let preSamples = samples.prefix(impulseStart)
             let avgPreDev = preSamples.map { abs($0.magnitude - w.baseline) }
@@ -74,8 +78,6 @@ final class ShapeAnalyzer {
             if avgPreDev > maxPreQuietDeviation {
                 return .reject(reason: "pre_noisy avg_dev=\(String(format: "%.3f", avgPreDev))")
             }
-        } else {
-            return .reject(reason: "no_pre_buffer")
         }
 
         // 3. Attack check.
