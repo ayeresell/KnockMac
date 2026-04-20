@@ -43,7 +43,7 @@ final class KnockDetector {
             minPeakDeviation: 0.060,
             minSignedDy: -0.002
         )
-        self.matcher = DoubleKnockMatcher(minGap: 0.15, maxGap: 0.5, maxAmpRatio: 4.0)
+        self.matcher = DoubleKnockMatcher(minGap: 0.15, maxGap: 0.5, maxAmpRatio: 4.0, maxAttackRatio: 4.0)
 
         wire()
         print("[Detector] v2 initialized — k=5.0 absFloor=0.038 attack≤20 minPeak=0.060g zDom=disabled sdy≥-0.002 ampRatio≤4.0 gap=[0.15,0.5]s gate=0.5s cooldown=0.35s")
