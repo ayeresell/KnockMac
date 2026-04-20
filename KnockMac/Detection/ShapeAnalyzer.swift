@@ -16,6 +16,11 @@ final class ShapeAnalyzer {
     // consistently produce sdy ≤ -0.003g because the impact flexes the chassis in
     // the opposite direction from a knock on the upper body/lid (data-driven).
     let minSignedDy: Double
+    // Minimum allowed integral Y offset at peak (peak.y - mean(y, first 5 pre-samples)).
+    // yOff < T flags impulses originating from the lower half of the chassis
+    // (palm rest / underside) on Mac14,15 Event System IMU axis frame.
+    // Calibrated 2026-04-20 (see docs/superpowers/logs/calib_analysis.md).
+    let minYOff: Double
 
     init(maxAttackSamples: Int = 4,
          minDecaySamples: Int = 2,
@@ -23,7 +28,8 @@ final class ShapeAnalyzer {
          minZDominance: Double = 1.3,
          maxPreQuietDeviation: Double = 0.025,
          minPeakDeviation: Double = 0.0,
-         minSignedDy: Double = -.infinity) {
+         minSignedDy: Double = -.infinity,
+         minYOff: Double = -.infinity) {
         self.maxAttackSamples = maxAttackSamples
         self.minDecaySamples = minDecaySamples
         self.decayFraction = decayFraction
@@ -31,6 +37,7 @@ final class ShapeAnalyzer {
         self.maxPreQuietDeviation = maxPreQuietDeviation
         self.minPeakDeviation = minPeakDeviation
         self.minSignedDy = minSignedDy
+        self.minYOff = minYOff
     }
 
     func classify(_ w: CandidateTracker.ImpulseWindow) -> Classification {
