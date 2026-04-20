@@ -62,19 +62,14 @@ final class CandidateTrackerTests: XCTestCase {
         var emitted: [CandidateTracker.ImpulseWindow] = []
         t.onImpulse = { emitted.append($0) }
 
-        // Sustained above-threshold signal. With the draining-timeout in
-        // place (~100ms cap), a sustained signal will produce multiple emits
-        // — one per (collect + drain) cycle. We just verify each emit
-        // respects the per-impulse 30-sample collected cap.
+        // Sustained above-threshold signal.
         for _ in 0..<5 {
             t.feed(sample(z: 1.001), deviation: 0.001, threshold: 0.025, baseline: 1.0)
         }
         for _ in 0..<100 {
             t.feed(sample(z: 1.05), deviation: 0.05, threshold: 0.025, baseline: 1.0)
         }
-        XCTAssertGreaterThanOrEqual(emitted.count, 1)
-        for w in emitted {
-            XCTAssertLessThanOrEqual(w.samples.count, 40) // 30 collected + up to 10 pre-samples
-        }
+        XCTAssertEqual(emitted.count, 1)
+        XCTAssertLessThanOrEqual(emitted[0].samples.count, 40)  // 30 collected + up to 10 pre-samples
     }
 }

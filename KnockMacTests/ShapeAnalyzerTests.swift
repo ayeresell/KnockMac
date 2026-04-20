@@ -14,8 +14,7 @@ final class ShapeAnalyzerTests: XCTestCase {
         let peakIndex = samples.enumerated().max(by: {
             abs($0.element.magnitude - baseline) < abs($1.element.magnitude - baseline)
         })!.offset
-        let refined = CandidateTracker.parabolicPeak(samples: samples, peakIndex: peakIndex, baseline: baseline)
-        return CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: baseline, refinedPeakDeviation: refined)
+        return CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: baseline)
     }
 
     func testAcceptsCanonicalKnock() {
@@ -74,8 +73,7 @@ final class ShapeAnalyzerTests: XCTestCase {
         samples.append(AccelSample(x: 0.01, y: 0, z: 1.001))
         samples.append(AccelSample(x: 0.005, y: 0, z: 1.001))
         let peakIndex = 6
-        let refined = CandidateTracker.parabolicPeak(samples: samples, peakIndex: peakIndex, baseline: 1.0)
-        let w = CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: 1.0, refinedPeakDeviation: refined)
+        let w = CandidateTracker.ImpulseWindow(samples: samples, peakIndex: peakIndex, baseline: 1.0)
 
         if case .accept = a.classify(w) {
             XCTFail("Expected reject (weak Z dominance)")
