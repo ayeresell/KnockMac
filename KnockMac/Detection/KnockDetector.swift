@@ -8,7 +8,7 @@ final class KnockDetector {
     var singleKnockOnly: Bool = false {
         didSet { matcher.singleKnockOnly = singleKnockOnly }
     }
-    var cooldown: TimeInterval = 1.0
+    var cooldown: TimeInterval = 0.15
 
     private let gate: InputActivityGate
     private let baseline: AdaptiveBaseline
