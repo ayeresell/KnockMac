@@ -2,8 +2,18 @@ import SwiftUI
 import Combine
 import CoreGraphics
 
+extension Notification.Name {
+    /// Posted once per process when the IMU delivers its first sample.
+    static let sensorAvailable = Notification.Name("KnockMac.SensorAvailable")
+}
+
 @MainActor
 final class KnockController: ObservableObject {
+    // Latched flag for late observers (e.g. OnboardingView mounting after
+    // the first sample has already arrived). Notification fires on the
+    // false→true transition; this captures the state for whoever missed it.
+    nonisolated(unsafe) static private(set) var sensorEverAvailable: Bool = false
+
     @Published var isActive: Bool
     @Published var lastKnockTime: Date?
     @Published var sensorAvailable = false
@@ -27,9 +37,16 @@ final class KnockController: ObservableObject {
         }
 
         accelReader.onSample = { [weak self] sample in
-            guard let self, self.isActive else { return }
+            guard let self else { return }
+            // Track sensor availability regardless of isActive so the onboarding
+            // System Check can verify the IMU even before permissions are granted.
+            if !self.sensorAvailable {
+                self.sensorAvailable = true
+                Self.sensorEverAvailable = true
+                NotificationCenter.default.post(name: .sensorAvailable, object: nil)
+            }
+            guard self.isActive else { return }
             self.knockDetector.feed(sample)
-            if !self.sensorAvailable { self.sensorAvailable = true }
         }
 
         // Pause main reader when calibration starts to prevent double-processing.
@@ -49,6 +66,12 @@ final class KnockController: ObservableObject {
                 self?.accelReader.rebind()
             }
             .store(in: &cancellables)
+
+        // Hook for future pre-warming (e.g. caching shortcut metadata).
+        // No-op in v1 — ActionRegistry.current() reads UserDefaults on every knock.
+        NotificationCenter.default.publisher(for: NSNotification.Name("ActionChanged"))
+            .sink { _ in }
+            .store(in: &cancellables)
     }
 
     func toggle() {
@@ -57,7 +80,8 @@ final class KnockController: ObservableObject {
 
     private func handleKnock() {
         lastKnockTime = Date()
+        KnockGlowWindowController.shared.flash()
         audioPlayer.playKnockSound()
-        ScreenshotAction.captureFullScreen()
+        ActionRegistry.current().perform()
     }
 }
