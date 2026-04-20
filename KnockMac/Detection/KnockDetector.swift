@@ -1,6 +1,5 @@
 import Foundation
 
-@MainActor
 final class KnockDetector {
     // Public API preserved for compatibility with existing call sites.
     var onKnock: (() -> Void)?
@@ -57,42 +56,11 @@ final class KnockDetector {
             let impulseStart = self.findImpulseStart(window)
             let attack = max(0, window.peakIndex - impulseStart)
             print("[Tracker] impulse emitted: peak=\(String(format: "%.3f", peakDev))g attack=\(attack) samples=\(window.samples.count) baseline=\(String(format: "%.3f", window.baseline))g")
-            print("[Gate.diag] \(self.gate.debugSnapshot())")
-
-            // Post-hoc input check. Impulse window spans ~100–300ms. If any
-            // keyboard/mouse event landed during that time (or up to 100ms
-            // before, to catch vibrations that reach the IMU slightly ahead
-            // of the key switch event), drop the impulse. This closes the
-            // race where the vibration starts before `.keyDown` registers in
-            // CGEventSource and slips past the per-sample gate.
-            let windowDuration = 0.3
-            let preGuard = 0.1
-            let tSinceInput = self.gate.secondsSinceLastInput()
-            if tSinceInput < windowDuration + preGuard {
-                print("[Detector] impulse rejected — input event \(String(format: "%.3f", tSinceInput))s ago overlaps impulse window")
-                self.unfreezeAfter = now + 0.5
-                return
-            }
 
             switch self.shape.classify(window) {
             case .accept(let peak):
                 print("[Shape] ✅ accept peak=\(String(format: "%.3f", peak))g attack=\(attack)")
-                // Defer matcher submission by 150ms and re-check the gate.
-                // This catches the case where a keypress's vibration reaches
-                // the IMU before the key-switch event registers in
-                // CGEventSource (physical key travel can take 50-100ms). By
-                // the time the delayed check runs, the .keyDown event will
-                // have landed, and we can reject the impulse.
-                let event = KnockEvent(time: now, peak: peak, attackSamples: attack)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-                    guard let self else { return }
-                    let tSinceInput = self.gate.secondsSinceLastInput()
-                    if tSinceInput < 0.3 {
-                        print("[Detector] impulse rejected (delayed) — input \(String(format: "%.3f", tSinceInput))s ago")
-                        return
-                    }
-                    self.matcher.submit(event)
-                }
+                self.matcher.submit(KnockEvent(time: now, peak: peak, attackSamples: attack))
             case .reject(let reason):
                 print("[Shape] ❌ reject: \(reason)")
             }
@@ -127,12 +95,6 @@ final class KnockDetector {
         if gate.shouldSuppress() {
             baseline.feed(sample.magnitude)
             gateSuppressCount += 1
-            // Discard any partial impulse the tracker may have started BEFORE
-            // the input event registered in CGEventSource. Otherwise the
-            // collected samples linger, and once the gate releases, the
-            // tracker emits a stale impulse whose apparent age exceeds the
-            // post-hoc gate's lookback window.
-            tracker.reset()
             return
         }
 
