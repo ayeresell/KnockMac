@@ -28,8 +28,6 @@ targets:
         LSMinimumSystemVersion: "15.0"
         NSHumanReadableCopyright: "Copyright © 2025 KnockMac"
         NSScreenCaptureUsageDescription: "KnockMac needs screen recording access to take screenshots when you knock."
-        NSMotionUsageDescription: "KnockMac reads the built-in accelerometer to detect double-knocks on the laptop body."
-        NSInputMonitoringUsageDescription: "KnockMac reads raw accelerometer HID reports to detect knocks."
         CFBundleIconFile: "AppIcon"
     settings:
       base:
